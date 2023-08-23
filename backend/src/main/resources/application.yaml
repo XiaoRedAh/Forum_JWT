@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/template
+    username: root
+    password: cronaldo7
+  data:
+    redis:
+      port: 6379
+  mail:
+    # 163邮箱的地址为smtp.163.com
+    host: smtp.163.com
+    # 我的163邮箱账号
+    username: m19925651773@163.com
+    # 注意密钥是在开启smtp/pop3时自动生成的，记得保存一下，不然就找不到了
+    password: ZTREXUEQVBAJLDCW
+    port: 465
+    properties:
+      from: m19925651773@163.com
+      mail:
+        smtp:
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+  rabbitmq:
+    addresses: localhost
+    username: admin
+    password: admin
+    virtual-host: /
+
