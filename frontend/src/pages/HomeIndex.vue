@@ -2,6 +2,8 @@
 
 import {logout} from "@/net/index.js";
 import router from "@/router/index.js";
+import TopBanner from "@/components/home/TopBanner.vue"
+import NavigationBar from "@/components/home/NavigationBar.vue"
 
 const userLogout = ()=>{
   logout(()=>router.push('/'))
@@ -11,9 +13,13 @@ const userLogout = ()=>{
 <template>
   <div class="common-layout">
     <el-container class="container">
-      <el-header class="top-banner">Header</el-header>
+      <el-header class="top-banner">
+        <TopBanner></TopBanner>
+      </el-header>
       <el-container class="main-body">
-        <el-aside class="aside">Aside</el-aside>
+        <el-aside class="aside">
+          <NavigationBar></NavigationBar>
+        </el-aside>
         <el-main class="main">Main</el-main>
       </el-container>
     </el-container>
@@ -30,17 +36,17 @@ const userLogout = ()=>{
   .container{
     height: 100%;
     .top-banner{
-      background-color: red;
       height: 65px;
+      border-bottom: 1px solid var(--el-border-color);
     }
     .main-body{
 
       .aside{
-        background-color: blue;
+
         width: 250px;
       }
       .main{
-        background-color: grey;
+
 
       }
     }
