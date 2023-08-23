@@ -1,13 +1,12 @@
 <script setup>
 
-import {logout} from "@/net/index.js";
-import router from "@/router/index.js";
 import TopBanner from "@/components/home/TopBanner.vue"
 import NavigationBar from "@/components/home/NavigationBar.vue"
+import {get} from "@/net/index.js"
+import {useStore} from "@/store/index.js";
 
-const userLogout = ()=>{
-  logout(()=>router.push('/'))
-}
+
+
 </script>
 
 <template>
@@ -24,9 +23,6 @@ const userLogout = ()=>{
       </el-container>
     </el-container>
   </div>
-<!--  <div>-->
-<!--    <el-button @click="userLogout" type="danger">退出登录</el-button>-->
-<!--  </div>-->
 </template>
 
 

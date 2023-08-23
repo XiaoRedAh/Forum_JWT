@@ -15,7 +15,7 @@ const toggleDark = useToggle(isDark)
 
 <template>
   <el-button :icon="isDark?Moon:Sunny"  @click="toggleDark()" circle
-             size="large" style="position: absolute;left: 50px;top: 50px;"/>
+             size="large" style="position: absolute;left: 20px;top: 18px;"/>
   <router-view></router-view>
 </template>
 

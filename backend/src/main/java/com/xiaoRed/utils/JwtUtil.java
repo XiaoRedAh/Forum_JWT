@@ -102,6 +102,15 @@ public class JwtUtil {
     }
 
     /**
+     * 将jwt对象中的用户ID提取出来
+     * @param decodedJWT 已解析的Jwt对象
+     * @return 用户ID
+     */
+    public Integer toId(DecodedJWT decodedJWT){
+        return decodedJWT.getClaims().get("id").asInt();
+    }
+
+    /**
      * 判断jwt令牌是否无效（是否被列入Redis黑名单）：如果jwt在黑名单中，则无效（用uuid在redis里查）
      * @param uuid 令牌ID
      * @return true表示jwt令牌无效，false表示jwt令牌有效

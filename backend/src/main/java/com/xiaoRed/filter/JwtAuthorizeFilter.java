@@ -39,6 +39,8 @@ public class JwtAuthorizeFilter extends OncePerRequestFilter {
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             //把配置好的Authentication塞给SecurityContext表示已经完成验证
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            //把用户id丢到请求域中，之后的请求，后端都可从请求域中拿到这个用户id
+            request.setAttribute(Const.ATTR_USER_ID, jwtUtil.toId(jwt));
         }
         //jwt验证没通过，直接放行（因为后面还有一系列过滤器对其进行认证分析）
         filterChain.doFilter(request, response);

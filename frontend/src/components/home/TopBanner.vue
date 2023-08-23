@@ -1,4 +1,18 @@
 <script setup>
+import {SwitchButton, User} from '@element-plus/icons-vue';
+import {get, logout} from "@/net/index.js";
+import router from "@/router/index.js";
+import {useStore} from "@/store/index.js";
+
+const userLogout = ()=>{
+  logout(()=>router.push('/'))
+}
+
+const store = useStore()
+
+get('/api/user/info', (data)=>{
+  store.user = data
+})
 
 </script>
 
@@ -9,13 +23,21 @@
     </div>
     <div class="user-info">
       <div class="profile">
-        <div style="font-size: 18px;font-weight: bold;">用户名</div>
-        <div style="font-size: 12px;color: grey">电子邮件</div>
+        <div style="font-size: 20px;font-weight: bold;">{{store.user.username}}</div>
+        <div style="font-size: 14px;color: grey">{{store.user.email}}</div>
       </div>
       <div class="avatar">
-        <el-avatar
-            src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-        />
+        <el-dropdown>
+          <el-avatar
+              src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+          />
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item :icon="User">个人信息</el-dropdown-item>
+              <el-dropdown-item :icon="SwitchButton" @click="userLogout">退出登录</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
 
@@ -34,6 +56,7 @@
     height: 32px;
   }
   .user-info{
+    margin-right: 25px;
     display: flex;
     .profile{
       margin-right: 15px;
@@ -42,6 +65,9 @@
     }
     .avatar{
       margin-top: 10px;
+      :hover{
+        cursor: pointer;
+      }
     }
   }
 }

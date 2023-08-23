@@ -167,6 +167,16 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     }
 
     /**
+     * 根据用户id从数据库查询出对应用户
+     * @param id 用户id
+     * @return
+     */
+    @Override
+    public Account findAccountById(int id) {
+        return this.query().eq("id", id).one();
+    }
+
+    /**
      * 针对IP地址进行邮件验证码获取限流
      * @param ip 请求的ip地址
      * @return 是否通过限流验证验证，false表示该ip在限流名单中，true表示尚未被限流

@@ -20,6 +20,6 @@ public interface AccountService extends IService<Account>, UserDetailsService {
     String registerEmailAccount(EmailRegisterVo emailRegisterVo);
     String resetCodeConfirm(ConfirmResetVo confirmResetVo);
     String resetPassword(ResetPawVo resetPawVo);
-
+    Account findAccountById(int id);
 }
 
