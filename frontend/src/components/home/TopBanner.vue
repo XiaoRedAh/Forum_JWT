@@ -1,17 +1,25 @@
 <script setup>
-import {SwitchButton, User} from '@element-plus/icons-vue';
+import {SwitchButton, User, Search} from '@element-plus/icons-vue';
 import {get, logout} from "@/net/index.js";
 import router from "@/router/index.js";
 import {useStore} from "@/store/index.js";
+import {reactive} from "vue";
 
 const userLogout = ()=>{
   logout(()=>router.push('/'))
 }
 
+//加载用户信息
 const store = useStore()
 
 get('/api/user/info', (data)=>{
   store.user = data
+})
+
+//搜索框内容
+const searchInput = reactive({
+  type: '1',
+  text: ''
 })
 
 </script>
@@ -20,6 +28,24 @@ get('/api/user/info', (data)=>{
   <div class="top-container">
     <div class="logo">
       <img src="https://element-plus.org/images/element-plus-logo.svg">
+    </div>
+    <div class="search-container">
+      <el-input
+          placeholder="搜索论坛相关内容..."
+          class="search-input"
+      >
+        <template #prepend>
+          <el-select v-model="searchInput.type" style="width: 115px">
+            <el-option label="帖子广场" value="1" />
+            <el-option label="校园活动" value="2" />
+            <el-option label="表白墙" value="3" />
+            <el-option label="教务通知" value="4" />
+          </el-select>
+        </template>
+        <template #append>
+          <el-button :icon="Search" />
+        </template>
+      </el-input>
     </div>
     <div class="user-info">
       <div class="profile">
@@ -54,6 +80,15 @@ get('/api/user/info', (data)=>{
   .logo{
     width: 180px;
     height: 32px;
+  }
+  .search-container{
+    width: 550px;
+    height: 100%;
+    .search-input{
+      width: 100%;
+      height: 34px;
+      margin-top: 15px;
+    }
   }
   .user-info{
     margin-right: 25px;
