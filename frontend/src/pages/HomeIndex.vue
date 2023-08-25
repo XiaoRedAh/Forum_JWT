@@ -19,7 +19,15 @@ import {useStore} from "@/store/index.js";
         <el-aside class="aside">
           <NavigationBar></NavigationBar>
         </el-aside>
-        <el-main class="main">Main</el-main>
+        <el-main class="main">
+          <el-scrollbar style="height: calc(100vh - 65px)">
+            <router-view v-slot="{ Component }">
+              <transition name="el-fade-in-linear" mode="out-in">
+                <component :is="Component" style="height: 100%"></component>
+              </transition>
+            </router-view>
+          </el-scrollbar>
+        </el-main>
       </el-container>
     </el-container>
   </div>
@@ -36,17 +44,20 @@ import {useStore} from "@/store/index.js";
       border-bottom: 1px solid var(--el-border-color);
     }
     .main-body{
-
       .aside{
-
         width: 250px;
-      }
-      .main{
-
-
       }
     }
   }
+}
+
+.main{
+  padding: 0;
+  background-color: #f7f8fa; //浅色模式下，主体内容的背景颜色
+}
+.dark .main{
+  padding: 0;
+  background-color: #212225; //深色模式下，主体内容的背景颜色
 }
 
 </style>

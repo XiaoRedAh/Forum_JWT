@@ -29,7 +29,14 @@ const router = createRouter({
         {
             path: '/home',
             name: 'home',
-            component: ()=>import('@/pages/HomeIndex.vue')
+            component: ()=>import('@/pages/HomeIndex.vue'),
+            children: [
+                {
+                    path: 'user-setting',
+                    name: 'user-setting',
+                    component: ()=>import('@/pages/settings/UserSetting.vue')
+                }
+            ]
         }
     ]
 

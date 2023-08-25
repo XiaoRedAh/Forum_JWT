@@ -19,6 +19,8 @@ import {
 <template>
   <div class="nav-container">
     <el-menu
+        router
+        :default-active="$route.path"
         class="menu"
     >
       <el-sub-menu index="1">
@@ -105,11 +107,11 @@ import {
           </el-icon>
           <span>个人设置</span>
         </template>
-        <el-menu-item>
+        <el-menu-item index="/home/user-setting">
           <el-icon>
             <user/>
           </el-icon>
-          <span>个人消息设置</span>
+          <span>个人信息设置</span>
         </el-menu-item>
         <el-menu-item>
           <el-icon>
