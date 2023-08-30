@@ -8,7 +8,7 @@ import {post, get} from "@/net";
 import {ElMessage} from "element-plus";
 
 const registerTime = computed(() => new Date(store.user.registerTime).toLocaleString())
-const form = ref()
+
 //校验“用户名输入框”不能有特殊字符
 const validateUsername = (rule, value, callback) => {
   if (value === '') {
@@ -51,49 +51,61 @@ const rules = {
     {max: 500, message: '个人简介不能超过500字', trigger: ['blur', 'change']}
   ]
 }
-/*"个人信息设置"的各个参数*/
-const infoFrom = reactive({
+
+//用户信息卡片中的简介
+const desc = ref('')
+const baseFormRef = ref()
+
+/*"账号信息设置"表单的各个参数*/
+const baseForm = reactive({
   username: null,
-  desc: '',
-  qq: '',
+  gender: 0,
   phone: '',
+  qq: '',
   wx: '',
-  sex: 'male'
+  desc: '',
 })
 
-//点击保存按钮，触发这个保存函数
+//加载该页面时，获取用户详细信息
+onMounted(() => {
+  if (baseForm.username == null){
+    get('/api/user/details', (data) =>{
+      baseForm.username = store.user.username
+      baseForm.gender = data.gender
+      baseForm.phone = data.phone
+      baseForm.qq = data.qq
+      baseForm.wx = data.wx
+      baseForm.desc = data.desc
+      desc.value = data.desc
+    })
+  }
+})
+
+//保存用户详细信息
 const save = () => {
-  form.value.validate((isValid) => {
+  baseFormRef.value.validate((isValid) => {
     if (isValid) {
-      post('/api/user/save-info', infoFrom, () => {
-        //用户名修改成功后，重新获取用户信息，使得新用户名马上能呈现在页面上
-        get('/api/user/me', (message) => {
-          //获取成功，就将用户信息存储在前端，然后才跳转到index
-          store.auth.user = message
-          localStorage.setItem("user", JSON.stringify(message))//存在localStorage永久存储
-        }, () => {
-          store.auth.user = null
+      post('/api/user/save-details', baseForm, ()=>{
+        //成功修改了用户详细信息，那就需要重新获取它们，更新到前端
+        get('/api/user/details', (data) =>{
+          baseForm.username = store.user.username
+          baseForm.gender = data.gender
+          baseForm.phone = data.phone
+          baseForm.qq = data.qq
+          baseForm.wx = data.wx
+          baseForm.desc = data.desc
         })
-        ElMessage.success("保存成功！")
-      }, 'json')
+        //还需要将store中存的用户名也更新
+        store.user.username =  baseForm.username
+        //将另一个卡片的desc也同步更新
+        desc.value = baseForm.desc
+        ElMessage.success('账号信息修改成功')
+      })
     } else {
       ElMessage.warning('表单内容有误，请重新检查表单内容')
     }
   })
 }
-
-onMounted(() => {
-  if (infoFrom.username == null) {
-    get('/api/user/info', (message) => {
-      infoFrom.username = message.username
-      infoFrom.desc = message.desc
-      infoFrom.qq = message.qq
-      infoFrom.wx = message.wx
-      infoFrom.sex = message.sex ? message.sex : 'male'
-      infoFrom.phone = message.phone
-    })
-  }
-})
 
 </script>
 
@@ -114,35 +126,35 @@ onMounted(() => {
             </div>
           </div>
         </template>
-        <div>
+        <div class="card-bottom">
           <el-form
-              ref="form"
+              ref="baseFormRef"
               :rules="rules"
               label-position="top"
               label-width="100px"
-              :model="infoFrom"
+              :model="baseForm"
               style="max-width: 800px"
           >
             <el-form-item prop="username" label="用户名">
-              <el-input :maxlength="8" v-model="infoFrom.username"/>
+              <el-input :maxlength="8" v-model="baseForm.username"/>
             </el-form-item>
             <el-form-item label="性别">
-              <el-radio-group v-model="infoFrom.sex" class="ml-4">
-                <el-radio label="male" size="large">男</el-radio>
-                <el-radio label="female" size="large">女</el-radio>
+              <el-radio-group v-model="baseForm.gender" class="ml-4">
+                <el-radio :label="0" size="large">男</el-radio>
+                <el-radio :label="1" size="large">女</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item prop="phone" label="手机号">
-              <el-input :maxlength="11" v-model="infoFrom.phone"/>
+              <el-input :maxlength="11" v-model="baseForm.phone"/>
             </el-form-item>
             <el-form-item label="QQ号" prop="qq">
-              <el-input :maxlength="11" v-model="infoFrom.qq"/>
+              <el-input :maxlength="11" v-model="baseForm.qq"/>
             </el-form-item>
             <el-form-item label="微信号" prop="wx">
-              <el-input :maxlength="30" v-model="infoFrom.wx"/>
+              <el-input :maxlength="30" v-model="baseForm.wx"/>
             </el-form-item>
             <el-form-item label="个人简介" prop="desc">
-              <el-input :maxlength="500" type="textarea" v-model="infoFrom.desc" :rows="6"/>
+              <el-input :maxlength="500" type="textarea" v-model="baseForm.desc" :rows="6"/>
             </el-form-item>
           </el-form>
           <el-button type="success" :icon="Select" @click="save">保存个人信息设置</el-button>
@@ -151,7 +163,7 @@ onMounted(() => {
     </div>
     <div class="right">
       <el-card class="desc-card">
-        <template #header>
+
           <div class="card-header">
             <div style="font-size: 18px;font-weight: bold;">
               <el-avatar
@@ -161,12 +173,9 @@ onMounted(() => {
               <div>你好，{{store.user.username}}</div>
             </div>
           </div>
-        </template>
-        <div>
-          abababba
-          adad
-          fnhjbc
-          pqqe3424
+        <el-divider style="margin: 10px 0 0 0"></el-divider>
+        <div class="card-bottom">
+          {{desc || '这个用户很懒，没有填写个人简介~'}}
         </div>
       </el-card>
       <el-card class="registerTime-card">
@@ -180,6 +189,9 @@ onMounted(() => {
 </template>
 
 <style lang="less" scoped>
+:deep(.el-card__body){
+  padding: 0;
+}
 
 .page-container {
   display: flex;
@@ -193,6 +205,10 @@ onMounted(() => {
       min-height: 20px;
       box-sizing: border-box;
       .card-header {
+        padding: 10px 10px 5px 3px;
+      }
+      .card-bottom{
+        padding: var(--el-card-padding);
       }
     }
   }
@@ -202,18 +218,28 @@ onMounted(() => {
     top: 20px;
     display: flex;
     flex-direction: column;
-    width: 300px;
-    margin-left: 80px;
+    width: 350px;
+    margin-left: 60px;
     margin-right: 60px;
 
     .desc-card {
       margin-top: 30px;
+      border-radius: 10px;
+      border: 1px solid var(--el-border-color);
       .card-header{
         text-align: center;
+        padding-top: 10px;
+      }
+      .card-bottom{
+        color: grey;
+        padding: 15px;
       }
     }
 
     .registerTime-card {
+      border-radius: 10px;
+      border: 1px solid var(--el-border-color);
+      padding: var(--el-card-padding);
       margin-top: 20px;
     }
   }

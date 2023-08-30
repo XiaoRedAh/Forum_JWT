@@ -25,7 +25,7 @@ public class DetailsSaveVo {
     private Integer gender;
     @Length(max = 11)
     private String phone;
-    @Length(max = 13)
+    @Length(max = 11)
     private String qq;
     @Length(max = 20)
     private String wx;

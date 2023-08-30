@@ -3,6 +3,7 @@ package com.xiaoRed.entity.dto;
 
 import java.io.Serializable;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.xiaoRed.entity.BaseData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,7 +32,7 @@ public class AccountDetails implements BaseData {
     private String qq;
     
     private String wx;
-    
+    @TableField("`desc`") //desc是sql语句的关键字，需要区分一下
     private String desc;
 }
 
