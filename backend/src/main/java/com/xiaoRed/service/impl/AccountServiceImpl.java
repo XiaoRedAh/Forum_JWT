@@ -6,6 +6,7 @@ import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.Account;
 import com.xiaoRed.entity.vo.request.ConfirmResetVo;
 import com.xiaoRed.entity.vo.request.EmailRegisterVo;
+import com.xiaoRed.entity.vo.request.ModifyEmailVo;
 import com.xiaoRed.entity.vo.request.ResetPawVo;
 import com.xiaoRed.mapper.AccountMapper;
 import com.xiaoRed.service.AccountService;
@@ -81,7 +82,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     /**
      * 发送邮箱验证码
-     * @param type 判断在哪个场景下发送验证码：注册邮箱，重置密码，...
+     * @param type 判断在哪个场景下发送验证码：注册邮箱，重置密码，修改邮箱，...
      * @param email 将验证码发送给哪个邮箱
      * @param ip 不能一直请求，需要记录ip地址限制请求频率
      * @return 返回null表示发送成功
@@ -162,6 +163,30 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (update){
             //更新数据库成功了，表明重置成功，对应的验证码没用了，手动从redis删除
             stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + email);
+        }
+        return null;
+    }
+
+    /**
+     * 修改账户绑定的电子邮箱功能
+     * @param id 执行此操作的账号id
+     * @param vo 前端传来的新电子邮箱和验证码封装为vo
+     * @return 返回null表示修改成功，修改失败则返回错误信息提示
+     */
+    @Override
+    public String modifyEmail(int id, ModifyEmailVo vo){
+        String code = stringRedisTemplate.opsForValue().get(Const.VERIFY_EMAIL_DATA + vo.getEmail()); //拿到redis中存的验证码
+        if(code == null) return "请先获取验证码";
+        if(!code.equals(vo.getCode())) return "验证码错误，请重新输入";
+        Account account = findAccountByNameOrEmail(vo.getEmail());
+        if(account!=null && account.getId() != id) return "此电子邮箱已被其他用户使用，请更换一个新的电子邮箱";
+        boolean update = this.update()
+                .set("email", vo.getEmail())
+                .eq("id", id)
+                .update();
+        if (update){
+            //更新数据库成功了，表明修改成功，对应的验证码没用了，手动从redis删除
+            stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + vo.getEmail());
         }
         return null;
     }

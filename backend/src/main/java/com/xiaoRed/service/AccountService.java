@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.xiaoRed.entity.dto.Account;
 import com.xiaoRed.entity.vo.request.ConfirmResetVo;
 import com.xiaoRed.entity.vo.request.EmailRegisterVo;
+import com.xiaoRed.entity.vo.request.ModifyEmailVo;
 import com.xiaoRed.entity.vo.request.ResetPawVo;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
@@ -20,6 +21,9 @@ public interface AccountService extends IService<Account>, UserDetailsService {
     String registerEmailAccount(EmailRegisterVo emailRegisterVo);
     String resetCodeConfirm(ConfirmResetVo confirmResetVo);
     String resetPassword(ResetPawVo resetPawVo);
+
+    String modifyEmail(int id, ModifyEmailVo vo);
+
     Account findAccountById(int id);
 }
 

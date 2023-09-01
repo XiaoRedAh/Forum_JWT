@@ -25,13 +25,13 @@ public class AuthorizeController {
 
     /**
      * 请求邮件验证码
-     * @param type 类型， 必须是register或reset中的一个
+     * @param type 类型， 必须是register或reset或modify中的一个
      * @param email 请求邮件，必须是合法的邮箱地址才能通过校验
      * @param request 请求，用来获得请求的ip地址
      * @return 是否请求成功
      */
     @GetMapping("/ask-code")
-    public RestBean<Void> askVerifyCode(@RequestParam @Pattern(regexp = "(register|reset)") String type, @RequestParam @Email String email,
+    public RestBean<Void> askVerifyCode(@RequestParam @Pattern(regexp = "(register|reset|modify)") String type, @RequestParam @Email String email,
                                         HttpServletRequest request){
         String message = accountService.sendEmailVerifyCode(type, email, request.getRemoteAddr());
         return message == null ? RestBean.success() : RestBean.failure(400, message);

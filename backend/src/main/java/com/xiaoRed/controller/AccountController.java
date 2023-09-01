@@ -6,6 +6,7 @@ import com.xiaoRed.entity.dto.Account;
 import com.xiaoRed.entity.dto.AccountDetails;
 import com.xiaoRed.entity.vo.AccountVo;
 import com.xiaoRed.entity.vo.request.DetailsSaveVo;
+import com.xiaoRed.entity.vo.request.ModifyEmailVo;
 import com.xiaoRed.entity.vo.response.AccountDetailsVo;
 import com.xiaoRed.service.AccountDetailsService;
 import com.xiaoRed.service.AccountService;
@@ -63,5 +64,17 @@ public class AccountController {
     public RestBean<Void> saveDetails(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid DetailsSaveVo vo){
         boolean isSuccess = accountDetailsService.saveAccountDetails(id, vo);
         return  isSuccess ? RestBean.success() : RestBean.failure(400, "此用户名已被其他用户使用，请重新设置");
+    }
+
+    /**
+     * 修改账号绑定的电子邮箱
+     * @param id 账号对应的id
+     * @param vo 前端传过来的新电子邮箱地址和验证码封装为vo
+     * @return
+     */
+    @PostMapping("/modify-email")
+    public RestBean<Void> modifyEmail(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid ModifyEmailVo vo){
+        String message = accountService.modifyEmail(id, vo);
+        return message==null ? RestBean.success() : RestBean.failure(400, message);
     }
 }
