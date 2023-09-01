@@ -9,6 +9,7 @@ import com.xiaoRed.service.AccountDetailsService;
 import com.xiaoRed.service.AccountService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * (AccountDetails)表服务实现类
@@ -39,6 +40,7 @@ public class AccountDetailsServiceImpl extends ServiceImpl<AccountDetailsMapper,
      * @return 是否保存成功
      */
     @Override
+    @Transactional //saveOrUpdate是一个事务操作
     public boolean saveAccountDetails(int id, DetailsSaveVo vo) {
         Account account = accountService.findAccountByNameOrEmail(vo.getUsername()); //从用户表中查有无同名的用户
         if(account == null || account.getId() == id){ //如果没有同名用户或同名用户就是自己，才可以进一步地修改
