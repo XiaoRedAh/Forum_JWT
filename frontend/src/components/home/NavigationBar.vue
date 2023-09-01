@@ -113,7 +113,7 @@ import {
           </el-icon>
           <span>个人信息设置</span>
         </el-menu-item>
-        <el-menu-item>
+        <el-menu-item index="/home/privacy-setting">
           <el-icon>
             <lock/>
           </el-icon>
