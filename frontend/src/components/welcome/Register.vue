@@ -102,7 +102,7 @@ const validateEmail = () => {
   get(`/api/auth/ask-code?email=${form.email}&type=register`, ()=>{
     ElMessage.success(`验证码已发送到邮箱: ${form.email}，请注意查收`)
     setInterval(() => coldTime.value--, 1000)//每一秒，冷却时间减1
-  },undefined, (message)=>{
+  },(message)=>{
     ElMessage.warning(message)
     coldTime.value = 0 //如果出现了些问题，冷却时间直接清空
   })
