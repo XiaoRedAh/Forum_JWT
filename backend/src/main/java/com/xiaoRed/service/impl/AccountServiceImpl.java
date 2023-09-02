@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.Account;
-import com.xiaoRed.entity.vo.request.ConfirmResetVo;
-import com.xiaoRed.entity.vo.request.EmailRegisterVo;
-import com.xiaoRed.entity.vo.request.ModifyEmailVo;
-import com.xiaoRed.entity.vo.request.ResetPawVo;
+import com.xiaoRed.entity.vo.request.*;
 import com.xiaoRed.mapper.AccountMapper;
 import com.xiaoRed.service.AccountService;
 import com.xiaoRed.utils.FlowUtil;
@@ -189,6 +186,25 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + vo.getEmail());
         }
         return null;
+    }
+
+    /**
+     * 修改密码功能【和忘记密码的重置密码功能区分】
+     * @param id 账号id
+     * @param vo 前端传来的原密码，新密码封装为vo
+     * @return 返回null说明修改成功，否则返回错误信息提示
+     */
+    @Override
+    public String changePassword(int id, ChangePawVo vo){
+        Account account = findAccountById(id);
+        String password_db = account.getPassword(); //拿到数据库中存储的密码
+        if (!encoder.matches(vo.getPassword_old(), password_db)) return "原密码不正确，重置密码失败"; //如果原密码匹配不上，则修改失败
+        //将新密码加密存储到数据库中
+        boolean isSuccess = this.update()
+                .eq("id", id)
+                .set("password", encoder.encode(vo.getPassword_new()))
+                .update();
+        return isSuccess ? null : "未知错误，请联系管理员";
     }
 
     /**

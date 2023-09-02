@@ -5,6 +5,7 @@ import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.dto.Account;
 import com.xiaoRed.entity.dto.AccountDetails;
 import com.xiaoRed.entity.vo.AccountVo;
+import com.xiaoRed.entity.vo.request.ChangePawVo;
 import com.xiaoRed.entity.vo.request.DetailsSaveVo;
 import com.xiaoRed.entity.vo.request.ModifyEmailVo;
 import com.xiaoRed.entity.vo.response.AccountDetailsVo;
@@ -76,5 +77,17 @@ public class AccountController {
     public RestBean<Void> modifyEmail(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid ModifyEmailVo vo){
         String message = accountService.modifyEmail(id, vo);
         return message==null ? RestBean.success() : RestBean.failure(400, message);
+    }
+
+    /**
+     * 修改密码功能【与忘记密码的重置密码区分】
+     * @param id 账号id
+     * @param vo 前端传来的原密码，新密码封装为vo
+     * @return
+     */
+    @PostMapping("/change-password")
+    public RestBean<Void> changePassword(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid ChangePawVo vo){
+        String message = accountService.changePassword(id, vo);
+        return message == null ? RestBean.success() : RestBean.failure(400, message);
     }
 }
