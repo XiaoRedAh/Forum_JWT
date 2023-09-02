@@ -4,12 +4,16 @@ import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.dto.Account;
 import com.xiaoRed.entity.dto.AccountDetails;
+import com.xiaoRed.entity.dto.AccountPrivacy;
 import com.xiaoRed.entity.vo.AccountVo;
 import com.xiaoRed.entity.vo.request.ChangePawVo;
 import com.xiaoRed.entity.vo.request.DetailsSaveVo;
 import com.xiaoRed.entity.vo.request.ModifyEmailVo;
+import com.xiaoRed.entity.vo.request.SavePrivacyVo;
 import com.xiaoRed.entity.vo.response.AccountDetailsVo;
+import com.xiaoRed.entity.vo.response.AccountPrivacyVo;
 import com.xiaoRed.service.AccountDetailsService;
+import com.xiaoRed.service.AccountPrivacyService;
 import com.xiaoRed.service.AccountService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -29,6 +33,9 @@ public class AccountController {
 
     @Resource
     AccountDetailsService accountDetailsService;
+
+    @Resource
+    AccountPrivacyService privacyService;
 
     /**
      * 获取用户相关信息，将这些信息封装为一个vo返回给前端
@@ -89,5 +96,28 @@ public class AccountController {
     public RestBean<Void> changePassword(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid ChangePawVo vo){
         String message = accountService.changePassword(id, vo);
         return message == null ? RestBean.success() : RestBean.failure(400, message);
+    }
+
+    /**
+     * 返回账号的隐私设置，展示在前端
+     * @param id
+     * @return
+     */
+    @GetMapping("/privacy")
+    public RestBean<AccountPrivacyVo> privacy(@RequestAttribute(Const.ATTR_USER_ID) int id){
+        AccountPrivacy accountPrivacy = privacyService.getAccountPrivacy(id);
+        return RestBean.success(accountPrivacy.asViewObject(AccountPrivacyVo.class));
+    }
+
+    /**
+     * 保存隐私设置
+     * @param id
+     * @param vo
+     * @return
+     */
+    @PostMapping("/save-privacy")
+    public RestBean<Void> savePrivacy(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid SavePrivacyVo vo){
+        privacyService.savePrivacy(id, vo);
+        return RestBean.success();
     }
 }

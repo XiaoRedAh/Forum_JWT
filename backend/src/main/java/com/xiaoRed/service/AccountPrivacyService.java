@@ -1,6 +1,8 @@
 package com.xiaoRed.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.xiaoRed.entity.dto.AccountPrivacy;
+import com.xiaoRed.entity.vo.request.SavePrivacyVo;
 
 
 /**
@@ -11,5 +13,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface AccountPrivacyService extends IService<AccountPrivacy> {
 
+    void savePrivacy(int id, SavePrivacyVo vo);
+
+    AccountPrivacy getAccountPrivacy(int id);
 }
 
