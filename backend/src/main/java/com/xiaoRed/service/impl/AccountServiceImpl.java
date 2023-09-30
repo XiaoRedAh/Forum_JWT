@@ -120,7 +120,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (this.existsAccountByUsername(username)) return "此用户名已被其他用户注册，请更换一个新的用户名";
         String password = encoder.encode(emailRegisterVo.getPassword());//密码需要加密后才能存入数据库
         //id已经设置过自动递增，因此传null即可；角色默认就是user
-        Account account = new Account(null, username, password, email, "user", new Date());
+        Account account = new Account(null, username, password, email, "user", null, new Date());
         if (this.save(account)) {
             //注册成功后，redis中对应的那个验证码就没用了，手动删除
             stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + email);

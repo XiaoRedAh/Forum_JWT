@@ -55,8 +55,11 @@ const searchInput = reactive({
       <div class="avatar">
         <el-dropdown>
           <el-avatar
-              src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+              :src="store.avatarUrl"
           />
+          <div>
+
+          </div>
           <template #dropdown>
             <el-dropdown-menu>
               <el-dropdown-item :icon="User">个人信息</el-dropdown-item>
