@@ -32,6 +32,11 @@ const router = createRouter({
             component: ()=>import('@/pages/HomeIndex.vue'),
             children: [
                 {
+                    path: '',
+                    name: 'topic-list',
+                    component: ()=>import('@/pages/forum/TopicList.vue')
+                },
+                {
                     path: 'user-setting',
                     name: 'user-setting',
                     component: ()=>import('@/pages/settings/UserSetting.vue')

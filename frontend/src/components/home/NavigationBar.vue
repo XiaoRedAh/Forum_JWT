@@ -30,7 +30,7 @@ import {
           </el-icon>
           <span>校园论坛</span>
         </template>
-        <el-menu-item>
+        <el-menu-item index="/home">
           <el-icon>
             <ChatLineRound/>
           </el-icon>
