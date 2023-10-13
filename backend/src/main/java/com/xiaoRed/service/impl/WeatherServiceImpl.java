@@ -27,7 +27,7 @@ public class WeatherServiceImpl implements WeatherService {
     StringRedisTemplate stringRedisTemplate;
 
     //用于“和风天气”api开发的用户认证key
-    @Value("${spring.weather.key")
+    @Value("${spring.weather.key}")
     String key;
 
     /**
