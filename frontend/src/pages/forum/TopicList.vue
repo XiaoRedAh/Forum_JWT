@@ -1,7 +1,7 @@
 <script setup>
 
 import LightCard from "@/components/LightCard.vue";
-import {Calendar, CollectionTag, Link} from "@element-plus/icons-vue";
+import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
 import {computed} from "vue";
 
 //利用js内置的api得到当前日期
@@ -15,7 +15,22 @@ const today = computed(()=>{
   <div class="container">
     <!--左侧主要展示帖子列表-->
     <div class="left">
-      <light-card style="height: 2000px"></light-card>
+      <!--最上面来个可以发表帖子的显示框-->
+      <light-card style="">
+        <div class="create-topic">
+          <el-icon><EditPen></EditPen></el-icon>点击发表主题...
+        </div>
+      </light-card>
+      <!--接下来分出一个框展示置顶的帖子-->
+      <light-card style="margin-top: 10px;height: 50px">
+
+      </light-card>
+      <!--剩下的空间展示帖子列表-->
+        <div style="margin-top: 10px;display: flex;flex-direction: column;gap: 15px">
+          <light-card style="height: 100px" v-for="item in 10">
+
+          </light-card>
+        </div>
     </div>
 
     <!--右侧装一些卡片丰富一下-->
@@ -95,6 +110,20 @@ const today = computed(()=>{
 
 .right{
   width: 25%;
+}
+
+.create-topic{
+  background-color: #efefef;
+  color: grey;
+  border-radius: 5px;
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+  padding: 0 10px;
+}
+
+.create-topic:hover{
+  cursor: pointer;
 }
 
 .card-container{
