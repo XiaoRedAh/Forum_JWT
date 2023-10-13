@@ -58,7 +58,7 @@ public class WeatherServiceImpl implements WeatherService {
                 "https://geoapi.qweather.com/v2/city/lookup?location="+longitude+","+latitude+"&key="+key,byte[].class);
         JSONObject geo = this.decompressStringToJson(data);
         if(geo==null)return null;
-        JSONObject location = geo.getJSONObject("location"); //将相应数据中的location字段拿出来
+        JSONObject location = geo.getJSONArray("location").getJSONObject(0); //将相应数据中的location字段拿出来
         int id = location.getInteger("id"); //拿到地区id
 
         //然后尝试从缓存中取，看此次请求的地区有没有在缓存里
