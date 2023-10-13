@@ -21,6 +21,7 @@ import {
     <el-menu
         router
         :default-active="$route.path"
+        :default-openeds="['1', '2', '3']"
         class="menu"
     >
       <el-sub-menu index="1">

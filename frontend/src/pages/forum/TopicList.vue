@@ -2,7 +2,12 @@
 
 import LightCard from "@/components/LightCard.vue";
 import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
-import {computed} from "vue";
+import {computed, ref} from "vue";
+import TopicEditor from "@/components/TopicEditor.vue";
+import Weather from "@/components/Weather.vue";
+
+//控制“编辑文章”的卡片是否弹出
+const editor = ref(false)
 
 //利用js内置的api得到当前日期
 const today = computed(()=>{
@@ -16,17 +21,17 @@ const today = computed(()=>{
     <!--左侧主要展示帖子列表-->
     <div class="left">
       <!--最上面来个可以发表帖子的显示框-->
-      <light-card style="">
-        <div class="create-topic">
+      <light-card>
+        <div class="create-topic" @click="editor = true">
           <el-icon><EditPen></EditPen></el-icon>点击发表主题...
         </div>
       </light-card>
       <!--接下来分出一个框展示置顶的帖子-->
-      <light-card style="margin-top: 10px;height: 50px">
+      <light-card class="topping-topic">
 
       </light-card>
       <!--剩下的空间展示帖子列表-->
-        <div style="margin-top: 10px;display: flex;flex-direction: column;gap: 15px">
+        <div class="topic-list-container">
           <light-card style="height: 100px" v-for="item in 10">
 
           </light-card>
@@ -92,6 +97,8 @@ const today = computed(()=>{
         </div>
       </div>
     </div>
+    <!--发表主题卡片，通过editor变量，控制它是否弹出-->
+    <topic-editor :show="editor" @close="editor = false"></topic-editor>
   </div>
 </template>
 
@@ -105,7 +112,6 @@ const today = computed(()=>{
 
 .left{
   flex: 1;
-  /*height: 2000px;*/
 }
 
 .right{
@@ -124,6 +130,18 @@ const today = computed(()=>{
 
 .create-topic:hover{
   cursor: pointer;
+}
+
+.topping-topic{
+  margin-top: 10px;
+  height: 50px
+}
+
+.topic-list-container{
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px
 }
 
 .card-container{
