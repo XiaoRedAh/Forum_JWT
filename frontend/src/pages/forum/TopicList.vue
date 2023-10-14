@@ -2,17 +2,50 @@
 
 import LightCard from "@/components/LightCard.vue";
 import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
-import {computed, ref} from "vue";
+import {computed, ref, reactive} from "vue";
+import {get} from "@/net/index.js"
 import TopicEditor from "@/components/TopicEditor.vue";
 import Weather from "@/components/Weather.vue";
+import {ElMessage} from "element-plus";
 
 //控制“编辑文章”的卡片是否弹出
 const editor = ref(false)
 
 //利用js内置的api得到当前日期
-const today = computed(()=>{
+const today = computed(() => {
   const date = new Date()
-  return `${date.getFullYear()}年${date.getMonth()}月${date.getDay()}日`
+  console.log(date)
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+})
+
+//获取后端返回的天气信息
+const weather = reactive({
+  location: {},
+  now_weather: {},
+  hourly: [],
+  success: false
+})
+
+//通过浏览器异步查询当前的经纬度信息，拿到后就去请求后端接口，获取天气信息
+//谷歌浏览器的位置获取功能似乎被墙掉了，但其他浏览器都是可以的
+navigator.geolocation.getCurrentPosition(position => {
+  const longitude = position.coords.longitude
+  const latitude = position.coords.latitude
+  get(`/api/forum/weather?longitude=${longitude}&latitude=${latitude}`, data => {
+    Object.assign(weather, data) //拷贝到weather变量
+    weather.success = true
+  })
+}, error => {
+  console.info(error)
+  ElMessage.warning('位置信息获取超时，请检测网络设置')
+  //拿不到本地区的天气信息，就拿个北京的天气信息展示一下就行
+  get(`/api/forum/weather?longitude=116.40529&latitude=39.90499`, data => {
+    Object.assign(weather, data) //拷贝到weather变量
+    weather.success = true
+  })
+}, {
+  timeout: 5000, //5秒钟获取不到，就不获取了，报错,去拿默认的天气信息
+  enableHighAccuracy: true //开启高精度
 })
 </script>
 
@@ -23,7 +56,10 @@ const today = computed(()=>{
       <!--最上面来个可以发表帖子的显示框-->
       <light-card>
         <div class="create-topic" @click="editor = true">
-          <el-icon><EditPen></EditPen></el-icon>点击发表主题...
+          <el-icon>
+            <EditPen></EditPen>
+          </el-icon>
+          点击发表主题...
         </div>
       </light-card>
       <!--接下来分出一个框展示置顶的帖子-->
@@ -31,11 +67,11 @@ const today = computed(()=>{
 
       </light-card>
       <!--剩下的空间展示帖子列表-->
-        <div class="topic-list-container">
-          <light-card style="height: 100px" v-for="item in 10">
+      <div class="topic-list-container">
+        <light-card style="height: 100px" v-for="item in 10">
 
-          </light-card>
-        </div>
+        </light-card>
+      </div>
     </div>
 
     <!--右侧装一些卡片丰富一下-->
@@ -44,10 +80,12 @@ const today = computed(()=>{
         <!--论坛公告卡片-->
         <light-card>
           <div style="font-weight: bold">
-            <el-icon><CollectionTag/></el-icon>
+            <el-icon>
+              <CollectionTag/>
+            </el-icon>
             论坛公告
           </div>
-            <el-divider style="margin: 10px 0"></el-divider>
+          <el-divider style="margin: 10px 0"></el-divider>
           <div style="font-size: 14px;margin: 10px;color: grey">
             hfwojfiownvwvnowjvoiw,fewfwgebw
             wfewvevewovnweojigefffffffhoijavnojajpv
@@ -59,19 +97,21 @@ const today = computed(()=>{
         <light-card style="margin-top: 10px">
           <div>
             <div style="font-weight: bold">
-              <el-icon><Calendar/></el-icon>
+              <el-icon>
+                <Calendar/>
+              </el-icon>
               天气信息
             </div>
           </div>
           <el-divider style="margin: 10px 0"></el-divider>
           <!--天气详情单独封装为一个组件-->
-          <weather/>
+          <weather :data="weather"/>
         </light-card>
         <!--展示日期及ip地址卡片-->
         <light-card style="margin-top: 10px">
           <div class="info-text">
             <div>当前日期</div>
-            <div>{{today}}</div>
+            <div>{{ today }}</div>
           </div>
           <div class="info-text">
             <div>当前IP地址</div>
@@ -80,7 +120,9 @@ const today = computed(()=>{
         </light-card>
         <!--展示友链-->
         <div style="font-size: 14px;margin-top: 10px;color: grey">
-          <el-icon><Link/></el-icon>
+          <el-icon>
+            <Link/>
+          </el-icon>
           友情链接
           <el-divider style="margin: 10px 0"/>
         </div>
@@ -103,22 +145,22 @@ const today = computed(()=>{
 </template>
 
 <style scoped>
-.container{
+.container {
   display: flex;
   margin: 20px auto;
   gap: 20px;
   max-width: 1300px;
 }
 
-.left{
+.left {
   flex: 1;
 }
 
-.right{
+.right {
   width: 25%;
 }
 
-.create-topic{
+.create-topic {
   background-color: #efefef;
   color: grey;
   border-radius: 5px;
@@ -128,41 +170,42 @@ const today = computed(()=>{
   padding: 0 10px;
 }
 
-.create-topic:hover{
+.create-topic:hover {
   cursor: pointer;
 }
 
-.topping-topic{
+.topping-topic {
   margin-top: 10px;
   height: 50px
 }
 
-.topic-list-container{
+.topic-list-container {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 15px
 }
 
-.card-container{
+.card-container {
   position: sticky; /*实现左侧帖子列表滚动，右侧卡片固定*/
   top: 20px;
 }
 
-.info-text{
+.info-text {
   display: flex;
   justify-content: space-between;
   color: grey;
   font-size: 16px;
 }
 
-.link-container{
+.link-container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-gap: 10px;margin-top:10px
+  grid-gap: 10px;
+  margin-top: 10px
 }
 
-.friend-link{
+.friend-link {
   border-radius: 5px;
   overflow: hidden;
 }
