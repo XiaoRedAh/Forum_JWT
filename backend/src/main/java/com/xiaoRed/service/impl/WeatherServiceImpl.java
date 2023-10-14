@@ -19,7 +19,7 @@ import java.util.zip.GZIPInputStream;
 @Service
 public class WeatherServiceImpl implements WeatherService {
 
-    //这个RestTemplate可以发送Rest请求，不用从头开始写
+    //这个RestTemplate可以方便地发送Rest请求
     @Resource
     RestTemplate restTemplate;
 
@@ -88,6 +88,7 @@ public class WeatherServiceImpl implements WeatherService {
         JSONObject now = this.decompressStringToJson(restTemplate.getForObject(
                 "https://devapi.qweather.com/v7/weather/now?location="+id+"&key="+key, byte[].class));
         if(now == null) return null;
+        //vo.setNow(now.getJSONObject("now"));
         vo.setNow_weather(now.getJSONObject("now"));
 
         //涉及到“和风天气”的逐小时天气预报api，文档地址：https://dev.qweather.com/docs/api/weather/weather-hourly-forecast/，这里使用的是免费的那个请求地址

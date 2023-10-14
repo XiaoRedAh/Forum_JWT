@@ -15,7 +15,7 @@ public class WebConfiguration {
         return new BCryptPasswordEncoder();
     }
 
-    //这个RestTemplate可以发送Rest请求，不用从头开始写
+    //这个RestTemplate可以方便地发送Rest请求
     @Bean
     public RestTemplate restTemplate(){
         return new RestTemplate();
