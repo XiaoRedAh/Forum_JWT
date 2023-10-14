@@ -21,13 +21,14 @@ public class ObjectController {
     ImageService imageService;
 
     /**
-     * 获取头像
+     * 获取图片，包括头像，文章图片...
      * @param request
      * @param response
      * @throws Exception
      */
-    @GetMapping("/images/avatar/**")
-    public void avatarFetch(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    @GetMapping("/images/**")
+    public void imageFetch(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        response.setHeader("Content-type", "image/jpg"); //如果有人想复制图片地址，额外访问时，需要加上这个，才可以正常访问
         this.fetchImage(request, response);
     }
 

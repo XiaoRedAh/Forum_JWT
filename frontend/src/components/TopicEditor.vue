@@ -1,8 +1,14 @@
 <script setup>
 import {reactive} from "vue";
 import {Document, Check} from "@element-plus/icons-vue";
-import {QuillEditor} from '@vueup/vue-quill'
-import  '@vueup/vue-quill/dist/vue-quill.snow.css'
+import ImageResize from "quill-image-resize-vue";
+import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
+import {Quill, QuillEditor} from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
+import axios from "axios";
+import {accessHeader} from "@/net/index.js";
+import {ElMessage} from "element-plus";
+
 defineProps({
   show: Boolean
 })
@@ -13,8 +19,8 @@ const emit = defineEmits(['close'])
 const article = reactive({
   type: null,
   title: '',
-  text: ''
-
+  text: '',
+  loading: false
 })
 
 //主题类型
@@ -25,13 +31,81 @@ const types = [
   {id: 4, name: '恋爱专题', desc: '向大家分享你的恋爱故事'},
   {id: 5, name: '踩坑记录', desc: '将你遇到的坑分享给大家，防止其他人再次入坑'}
 ]
+
+//将这两个模块注册进来
+Quill.register('modules/ImageResize', ImageResize)
+Quill.register('modules/ImageExtend', ImageExtend)
+//富文本编辑器的配置，详细的去看官方文档
+const editorOption = {
+  modules: {
+    toolbar: {
+      container: [
+        'bold', 'italic', 'underline', 'strike', 'clean',
+        'blockquote', 'code-block', 'link', 'image',
+        {'color': []}, {'background': []},
+        {'size': ['small', false, 'large', 'huge']},
+        {'header': [1, 2, 3, 4, 5, 6, false]},
+        {'list': 'ordered'}, {'list': 'bullet'},
+        {'align': []},
+        {'header': [1, 2, 3, 4, 5, 6, false]},
+        {'indent': '-1'}, {'indent': '+1'},
+      ],
+      //用于拦截，劫持原来的图片点击事件
+      handlers: {
+        'image': function () {
+          QuillWatch.emit(this.quill.id)
+        }
+      },
+    },
+    ImageResize: {
+      modules: ['Resize', 'DisplaySize']
+    },
+    ImageExtend: {
+      action: axios.defaults.baseURL + '/api/image/cache',  // 上传图片的请求地址, 如果action为空，则采用base64插入图片
+      name: 'file',  // 图片参数名
+      size: 5,  // 可选参数 图片大小，单位为M，1M = 1024kb
+      loading: true, //显示上传的状态
+      accept: 'image/png, image/jpeg', //允许上传的图片类型
+
+      // response 为一个函数用来获取具体图片地址
+      // 例如：上传图片后，服务器返回{ code: 200, data: "/cache/20231014/eb840ff2563a46089ed525ab8181b0dc", message: "请求成功" }
+      // 则使用 res.data，就可以拿到存储在minio服务器的图片的名字了
+      response: (resp) => {
+        if (resp.data) {
+          //从minio服务器获取图片
+          return axios.defaults.baseURL + '/images' + resp.data
+        } else {
+          return null
+        }
+      },
+      methods: 'POST',
+      headers: (xhr) => { //需要在header中携带JWT
+        xhr.setRequestHeader('Authorization', accessHeader().Authorization)
+      },  // 可选参数 设置请求头部
+      start: () => {// 可选参数 自定义开始上传触发事件
+        //主要是为了在上传图片的过程中，不要让用户继续编辑（在这期间编辑，可能会使图片显示的时候出现些bug）
+        article.loading = true
+      },
+      error: () => { // 可选参数 上传失败触发的事件
+        ElMessage.warning('图片上传失败，请联系管理员')
+        //设置为false，用户可以继续编辑了
+        article.loading = false
+      },
+      success: () => { // 可选参数  上传成功触发的事件
+        ElMessage.success('图片上传成功！')
+        //设置为false，用户可以继续编辑了
+        article.loading = false
+      },
+    }
+  }
+}
 </script>
 
 <template>
   <div>
     <el-drawer :model-value="show" direction="btt"
                :size="650" :close-on-click-modal="false"
-                @close="emit('close')">
+               @close="emit('close')">
       <template #header>
         <div>
           <div style="font-weight: bold">发表新的主题</div>
@@ -52,8 +126,9 @@ const types = [
         </div>
       </div>
       <!--富文本编辑器，这里使用quill-->
-      <div style="margin-top: 15px;height: 83%;overflow: hidden">
-        <quill-editor v-model="article.text" style="height: calc(100% - 41px)" placeholder="今天想分享点什么呢？"></quill-editor>
+      <div style="margin-top: 15px;height: 83%;overflow: hidden" v-loading="article.loading" element-loading-text="正在上传图片，请稍后">
+        <quill-editor v-model="article.text" style="height: calc(100% - 41px)" content-type="delta"
+                      placeholder="今天想分享点什么呢？" :options="editorOption"></quill-editor>
 
       </div>
       <!--字数统计 + 发表按钮-->
@@ -71,32 +146,32 @@ const types = [
 </template>
 
 <style scoped>
-:deep(.el-drawer){
+:deep(.el-drawer) {
   width: 50%;
   margin: auto;
   border-radius: 10px 10px 0 0;
 }
 
-:deep(.el-drawer__header){
+:deep(.el-drawer__header) {
   margin: 0;
 }
 
-:deep(.ql-toolbar){
+:deep(.ql-toolbar) {
   border-radius: 5px 5px 0 0;
   border-color: var(--el-border-color);
 }
 
-:deep(.ql-container){
+:deep(.ql-container) {
   border-radius: 0 0 5px 5px;
   border-color: var(--el-border-color);
 }
 
-:deep(.ql-editor.ql-blank::before){
+:deep(.ql-editor.ql-blank::before) {
   color: var(--el-text-color-placeholder);
   font-style: normal;
 }
 
-:deep(.ql-editor){
+:deep(.ql-editor) {
   font-size: 14px;
 }
 </style>

@@ -11,5 +11,7 @@ import java.security.NoSuchAlgorithmException;
 public interface ImageService {
     String uploadAvatar(MultipartFile file, int id) throws IOException;
 
+    String uploadImage(MultipartFile file, int id) throws IOException;
+
     void fetchImageFromMinio(OutputStream outputStream, String image) throws Exception;
 }

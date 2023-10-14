@@ -2,8 +2,10 @@ package com.xiaoRed.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.xiaoRed.entity.dto.Account;
+import com.xiaoRed.entity.dto.ImageStore;
 import com.xiaoRed.mapper.AccountMapper;
 import com.xiaoRed.service.ImageService;
+import com.xiaoRed.service.ImageStoreService;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
 import io.minio.MinioClient;
@@ -16,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.UUID;
 
 @Slf4j
@@ -27,6 +31,11 @@ public class ImageServiceImpl implements ImageService {
 
     @Resource
     AccountMapper accountMapper;
+
+    @Resource
+    ImageStoreService imageStoreService;
+
+    private SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 
     /**
      * minio客户端将头像上传到minio服务端
@@ -53,6 +62,33 @@ public class ImageServiceImpl implements ImageService {
             if(accountMapper.update(null, Wrappers.<Account>update().eq("id", id).set("avatar", imageName))>0)
                 return imageName;
             else return null;
+        }catch(Exception e){ //上传出现异常
+            log.error("图片上传失败：" + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    @Override
+    public String uploadImage(MultipartFile file, int id) throws IOException {
+        //todo:限制请求频率
+
+
+        String imageName = UUID.randomUUID().toString().replace("-", ""); //先用uuid随机给文件起个名
+        Date date = new Date();
+        imageName = "/cache/" + format.format(date) + "/" + imageName; //加个目录前缀,表示将图片存放在cache目录下,并且按日期分类存储，方便后续管理
+        //设置上传参数
+        PutObjectArgs args = PutObjectArgs.builder()
+                .bucket("forum") //上传到forum存储桶
+                .stream(file.getInputStream(), file.getSize(), -1) //分块大小默认
+                .object(imageName) //存储名字
+                .build();
+        try{ //成功上传
+            minioClient.putObject(args); //利用minio客户端以及设置好的参数进行上传
+            if (imageStoreService.save(new ImageStore(id, imageName, date))){
+                return imageName;
+            }else{
+                return null;
+            }
         }catch(Exception e){ //上传出现异常
             log.error("图片上传失败：" + e.getMessage(), e);
             return null;

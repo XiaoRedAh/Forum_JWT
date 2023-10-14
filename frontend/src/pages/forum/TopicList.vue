@@ -14,7 +14,6 @@ const editor = ref(false)
 //利用js内置的api得到当前日期
 const today = computed(() => {
   const date = new Date()
-  console.log(date)
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 })
 
