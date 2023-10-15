@@ -1,14 +1,15 @@
 package com.xiaoRed.controller;
 
+import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.vo.TopicTypeVo;
+import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.entity.vo.response.WeatherVo;
 import com.xiaoRed.service.TopicService;
 import com.xiaoRed.service.WeatherService;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -47,5 +48,12 @@ public class ForumController {
                 .stream()
                 .map(topicType -> topicType.asViewObject(TopicTypeVo.class))
                 .toList());
+    }
+
+    @PostMapping("/create-topic")
+    public  RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVo vo,
+                                       @RequestAttribute(Const.ATTR_USER_ID) int uid){
+        String message = topicService.createTopic(uid, vo);
+        return message == null ? RestBean.success() : RestBean.failure(400, message);
     }
 }

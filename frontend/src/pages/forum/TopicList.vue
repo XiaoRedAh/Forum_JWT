@@ -139,7 +139,7 @@ navigator.geolocation.getCurrentPosition(position => {
       </div>
     </div>
     <!--发表主题卡片，通过editor变量，控制它是否弹出-->
-    <topic-editor :show="editor" @close="editor = false"></topic-editor>
+    <topic-editor :show="editor" @success="editor = false" @close="editor = false"></topic-editor>
   </div>
 </template>
 

@@ -1,12 +1,12 @@
 <script setup>
-import {reactive} from "vue";
+import {reactive, computed, ref} from "vue";
 import {Document, Check} from "@element-plus/icons-vue";
 import ImageResize from "quill-image-resize-vue";
 import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
 import {Quill, QuillEditor} from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import axios from "axios";
-import {get} from "@/net/index.js"
+import {get, post} from "@/net/index.js"
 import {accessHeader} from "@/net/index.js";
 import {ElMessage} from "element-plus";
 import ColorDot from "@/components/ColorDot.vue";
@@ -15,7 +15,14 @@ defineProps({
   show: Boolean
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'success'])
+
+const refEditor = ref()
+function initEditor(){
+  refEditor.value.setContents('', 'user')
+  article.title = ''
+  article.type = null
+}
 
 //帖子文章相关字段
 const article = reactive({
@@ -28,6 +35,31 @@ const article = reactive({
 //页面加载后，第一时间先去把帖子类型拉取下来
 let types = []
 get('/api/forum/types', data => types = data)
+
+//动态地统计数据
+//ops里面的insert
+function deltaToText(delta){
+  if(!delta.ops) return ""
+  let str = ""
+  for(let op of delta.ops)
+    str+=op.insert
+  return str.replace(/\s/g,"")
+}
+
+const contentLength = computed(()=>deltaToText(article.text).length)
+
+function submitTopic(){
+  const text = deltaToText(article.text)
+
+  post('/api/forum/create-topic', {
+    type: article.type,
+    title: article.title,
+    content: article.text
+  }, ()=>{
+    ElMessage.success('帖子发表成功！')
+    emit('success')
+  })
+}
 
 
 //将这两个模块注册进来
@@ -103,6 +135,7 @@ const editorOption = {
   <div>
     <el-drawer :model-value="show" direction="btt"
                :size="650" :close-on-click-modal="false"
+               @open="initEditor"
                @close="emit('close')">
       <template #header>
         <div>
@@ -125,27 +158,27 @@ const editorOption = {
         </div>
         <!--填写标题-->
         <div style="flex: 1">
-          <el-input v-model="article.title" placeholder="请输入帖子标题..." :prefix-icon="Document"></el-input>
+          <el-input v-model="article.title" placeholder="请输入帖子标题..." :prefix-icon="Document" maxlength="20"></el-input>
         </div>
       </div>
       <!--展示选择的帖子类型描述-->
-      <div style="margin-top: 10px;font-size: 13px;color: grey">
-        <color-dot :color="article.type.color"></color-dot>
-        <span style="margin-left: 8px">{{article.type ? article.type.desc : '请选择帖子类型'}}</span>
-      </div>
+<!--      <div style="margin-top: 10px;font-size: 13px;color: grey">-->
+<!--        <color-dot :color="article.type.color"></color-dot>-->
+<!--        <span style="margin-left: 8px">{{article.type ? article.type.desc : '请选择帖子类型'}}</span>-->
+<!--      </div>-->
       <!--富文本编辑器，这里使用quill-->
       <div style="margin-top: 15px;height: 78%;overflow: hidden" v-loading="article.loading" element-loading-text="正在上传图片，请稍后">
         <quill-editor v-model="article.text" style="height: calc(100% - 41px)" content-type="delta"
-                      placeholder="今天想分享点什么呢？" :options="editorOption"></quill-editor>
+                      placeholder="今天想分享点什么呢？" :options="editorOption" ref="refEditor"></quill-editor>
 
       </div>
       <!--字数统计 + 发表按钮-->
       <div style="display: flex;justify-content: space-between;margin-top: 10px">
         <div style="color: grey;font-size: 13px">
-          当前字数 425（最大支持20000字）
+          当前字数（最大支持20000字）
         </div>
         <div>
-          <el-button type="success" :icon="Check" plain>立即发表帖子</el-button>
+          <el-button type="success" :icon="Check" @click="submitTopic" plain>立即发表帖子</el-button>
         </div>
       </div>
     </el-drawer>
