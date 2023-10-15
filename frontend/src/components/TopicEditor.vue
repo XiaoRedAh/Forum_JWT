@@ -6,8 +6,10 @@ import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
 import {Quill, QuillEditor} from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import axios from "axios";
+import {get} from "@/net/index.js"
 import {accessHeader} from "@/net/index.js";
 import {ElMessage} from "element-plus";
+import ColorDot from "@/components/ColorDot.vue";
 
 defineProps({
   show: Boolean
@@ -23,14 +25,10 @@ const article = reactive({
   loading: false
 })
 
-//主题类型
-const types = [
-  {id: 1, name: '日常闲聊', desc: '在这里分享你的日常生活'},
-  {id: 2, name: '真诚交友', desc: '在校园里寻找与你志同道合的朋友'},
-  {id: 3, name: '问题反馈', desc: '反馈你在学校遇到的问题'},
-  {id: 4, name: '恋爱专题', desc: '向大家分享你的恋爱故事'},
-  {id: 5, name: '踩坑记录', desc: '将你遇到的坑分享给大家，防止其他人再次入坑'}
-]
+//页面加载后，第一时间先去把帖子类型拉取下来
+let types = []
+get('/api/forum/types', data => types = data)
+
 
 //将这两个模块注册进来
 Quill.register('modules/ImageResize', ImageResize)
@@ -116,8 +114,13 @@ const editorOption = {
       <div style="display: flex;gap: 10px">
         <!--选择主题类型-->
         <div>
-          <el-select placeholder="选择主题类型..." v-model="article.type">
-            <el-option v-for="item in types" :value="item.id" :label="item.name"></el-option>
+          <el-select placeholder="选择主题类型..." value-key="id" v-model="article.type" :disabled="!types.length">
+            <el-option v-for="item in types" :value="item" :label="item.name">
+              <div>
+                <color-dot :color="item.color"></color-dot>
+                <span style="margin-left: 10px">{{item.name}}</span>
+              </div>
+            </el-option>
           </el-select>
         </div>
         <!--填写标题-->
@@ -125,8 +128,13 @@ const editorOption = {
           <el-input v-model="article.title" placeholder="请输入帖子标题..." :prefix-icon="Document"></el-input>
         </div>
       </div>
+      <!--展示选择的帖子类型描述-->
+      <div style="margin-top: 10px;font-size: 13px;color: grey">
+        <color-dot :color="article.type.color"></color-dot>
+        <span style="margin-left: 8px">{{article.type ? article.type.desc : '请选择帖子类型'}}</span>
+      </div>
       <!--富文本编辑器，这里使用quill-->
-      <div style="margin-top: 15px;height: 83%;overflow: hidden" v-loading="article.loading" element-loading-text="正在上传图片，请稍后">
+      <div style="margin-top: 15px;height: 78%;overflow: hidden" v-loading="article.loading" element-loading-text="正在上传图片，请稍后">
         <quill-editor v-model="article.text" style="height: calc(100% - 41px)" content-type="delta"
                       placeholder="今天想分享点什么呢？" :options="editorOption"></quill-editor>
 

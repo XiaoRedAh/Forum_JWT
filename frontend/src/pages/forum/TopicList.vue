@@ -169,6 +169,10 @@ navigator.geolocation.getCurrentPosition(position => {
   padding: 0 10px;
 }
 
+.dark .create-topic{
+  background-color: #232323;
+}
+
 .create-topic:hover {
   cursor: pointer;
 }
