@@ -30,7 +30,6 @@ public class ForumController {
      * 获取天气信息，包括实时天气和未来5小时的天气预报
      * @param longitude 经度
      * @param latitude 维度
-     * @return
      */
     @GetMapping("/weather")
     public RestBean<WeatherVo> weather(double longitude, double latitude){
@@ -40,7 +39,6 @@ public class ForumController {
 
     /**
      * 返回所有帖子类型的id，类型名，描述，颜色。即de_topic_type表中的数据
-     * @return
      */
     @GetMapping("/types")
     public RestBean<List<TopicTypeVo>> listTypes(){
@@ -50,6 +48,11 @@ public class ForumController {
                 .toList());
     }
 
+    /**
+     * 发表帖子功能
+     * @param vo 前端发送来的发表帖子参数包装为一个TopicCreateVo对象
+     * @param uid 帖子作者的id，直接从缓存里拿
+     */
     @PostMapping("/create-topic")
     public  RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVo vo,
                                        @RequestAttribute(Const.ATTR_USER_ID) int uid){

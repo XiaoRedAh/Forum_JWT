@@ -54,9 +54,9 @@ const searchInput = reactive({
       </div>
       <div class="avatar">
         <el-dropdown>
-          <el-avatar
-              :src="store.avatarUrl"
-          />
+<!--          <el-avatar-->
+<!--              :src="store.avatarUrl"-->
+<!--          />-->
           <div>
 
           </div>

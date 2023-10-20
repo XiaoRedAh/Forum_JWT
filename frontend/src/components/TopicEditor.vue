@@ -16,7 +16,7 @@ defineProps({
 })
 
 const emit = defineEmits(['close', 'success'])
-
+//初始化编辑器：置空
 const refEditor = ref()
 function initEditor(){
   refEditor.value.setContents('', 'user')
@@ -36,28 +36,48 @@ const article = reactive({
 let types = []
 get('/api/forum/types', data => types = data)
 
-//动态地统计数据
-//ops里面的insert
+
+//提取出富文本编辑器中的文本
 function deltaToText(delta){
   if(!delta.ops) return ""
   let str = ""
+  //文本在ops这个JSON数组中的insert字段下
   for(let op of delta.ops)
     str+=op.insert
+  //将字符串中的所有空白字符（包括空格、制表符、换行符等）替换为空字符串，并返回
   return str.replace(/\s/g,"")
 }
 
+//动态计算帖子长度
 const contentLength = computed(()=>deltaToText(article.text).length)
 
+//发表帖子
 function submitTopic(){
+  //发表前做一些简单校验
   const text = deltaToText(article.text)
-
+  if(!article.text){
+    ElMessage.warning('帖子内容不能为空')
+    return
+  }
+  if(text.length>20000){
+    ElMessage.warning('帖子字数超出限制，发表失败')
+    return
+  }
+  if(!article.title){
+    ElMessage.warning('帖子标题不能为空')
+    return
+  }
+  if(!article.type){
+    ElMessage.warning('帖子类型不能为空')
+    return
+  }
   post('/api/forum/create-topic', {
-    type: article.type,
+    type: article.type.id,
     title: article.title,
     content: article.text
   }, ()=>{
     ElMessage.success('帖子发表成功！')
-    emit('success')
+    emit('success') //发送success的emit状态，关闭组件
   })
 }
 
@@ -168,14 +188,14 @@ const editorOption = {
 <!--      </div>-->
       <!--富文本编辑器，这里使用quill-->
       <div style="margin-top: 15px;height: 78%;overflow: hidden" v-loading="article.loading" element-loading-text="正在上传图片，请稍后">
-        <quill-editor v-model="article.text" style="height: calc(100% - 41px)" content-type="delta"
+        <quill-editor v-model:content="article.text" style="height: calc(100% - 41px)" content-type="delta"
                       placeholder="今天想分享点什么呢？" :options="editorOption" ref="refEditor"></quill-editor>
 
       </div>
       <!--字数统计 + 发表按钮-->
       <div style="display: flex;justify-content: space-between;margin-top: 10px">
         <div style="color: grey;font-size: 13px">
-          当前字数（最大支持20000字）
+          当前字数{{contentLength}}（最大支持20000字）
         </div>
         <div>
           <el-button type="success" :icon="Check" @click="submitTopic" plain>立即发表帖子</el-button>

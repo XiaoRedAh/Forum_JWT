@@ -22,16 +22,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 public class Topic  {
     @TableId
     private Integer id;
-
-    
     private String title;
-    
     private String content;
-    
     private Integer uid;
-    
     private Integer type;
-    
     private Date time;
 }
 
