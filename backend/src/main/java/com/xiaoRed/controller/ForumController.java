@@ -4,11 +4,13 @@ import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.vo.TopicTypeVo;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
+import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.WeatherVo;
 import com.xiaoRed.service.TopicService;
 import com.xiaoRed.service.WeatherService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -58,5 +60,16 @@ public class ForumController {
                                        @RequestAttribute(Const.ATTR_USER_ID) int uid){
         String message = topicService.createTopic(uid, vo);
         return message == null ? RestBean.success() : RestBean.failure(400, message);
+    }
+
+    /**
+     * 根据选定查第几页和选定的帖子类型展示帖子列表
+     * @param page 展示的是第几页
+     * @param type 展示的帖子类型，全选则为0
+     */
+    @GetMapping("/list-topic")
+    public RestBean<List<TopicPreviewVo>> listTopic(@RequestParam @Min(0) int page,
+                                              @RequestParam @Min(0) int type){
+        return RestBean.success(topicService.listTopicByPage(page, type));
     }
 }

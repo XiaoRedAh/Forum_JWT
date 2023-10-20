@@ -23,4 +23,7 @@ public class Const {
 
     //向请求域里存放的自定义属性
     public final static String ATTR_USER_ID = "userId";
+
+    //论坛相关
+    public final static String FORUM_TOPIC_PREVIEW_CACHE = "topic:preview:";
 }
