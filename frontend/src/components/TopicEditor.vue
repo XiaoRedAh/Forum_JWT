@@ -182,10 +182,10 @@ const editorOption = {
         </div>
       </div>
       <!--展示选择的帖子类型描述-->
-<!--      <div style="margin-top: 10px;font-size: 13px;color: grey">-->
-<!--        <color-dot :color="article.type.color"></color-dot>-->
-<!--        <span style="margin-left: 8px">{{article.type ? article.type.desc : '请选择帖子类型'}}</span>-->
-<!--      </div>-->
+      <div style="margin-top: 10px;font-size: 13px;color: grey">
+        <color-dot :color="article.type ? article.type.color : '#dedede'"></color-dot>
+        <span style="margin-left: 8px">{{article.type ? article.type.desc : '请选择帖子类型'}}</span>
+      </div>
       <!--富文本编辑器，这里使用quill-->
       <div style="margin-top: 15px;height: 78%;overflow: hidden" v-loading="article.loading" element-loading-text="正在上传图片，请稍后">
         <quill-editor v-model:content="article.text" style="height: calc(100% - 41px)" content-type="delta"
