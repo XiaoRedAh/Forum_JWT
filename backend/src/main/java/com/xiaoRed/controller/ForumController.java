@@ -5,6 +5,7 @@ import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.vo.TopicTypeVo;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
+import com.xiaoRed.entity.vo.response.TopicTopVo;
 import com.xiaoRed.entity.vo.response.WeatherVo;
 import com.xiaoRed.service.TopicService;
 import com.xiaoRed.service.WeatherService;
@@ -72,4 +73,13 @@ public class ForumController {
                                               @RequestParam @Min(0) int type){
         return RestBean.success(topicService.listTopicByPage(page, type));
     }
+
+    /**
+     * 展示置顶帖子
+     */
+    @GetMapping("top-topic")
+    public RestBean<List<TopicTopVo>> TopTopic(){
+        return RestBean.success(topicService.listTopTopics());
+    }
+
 }

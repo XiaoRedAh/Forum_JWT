@@ -2,12 +2,14 @@ package com.xiaoRed.service.impl;
 
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.Topic;
 import com.xiaoRed.entity.dto.TopicType;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
+import com.xiaoRed.entity.vo.response.TopicTopVo;
 import com.xiaoRed.mapper.TopicMapper;
 import com.xiaoRed.mapper.TopicTypeMapper;
 import com.xiaoRed.service.TopicService;
@@ -72,7 +74,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         topic.setTime(new Date());
         if(this.save(topic)){
             //一旦有新帖子发布，有关帖子列表的所有缓存立即删除
-            cacheUtil.deleteCache(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
+            cacheUtil.deleteCachePattern(Const.FORUM_TOPIC_PREVIEW_CACHE + "*");
             return null;
         }else{
             return "内部错误，请联系管理员";
@@ -101,6 +103,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         previewVoList = topics.stream().map(this::resolveToPreview).toList(); //转化为TopicPreviewVo的列表
         cacheUtil.saveListToCache(key, previewVoList, 60); //拿到要求的帖子列表后，先存到缓存中
         return previewVoList;
+    }
+
+    /**
+     * 展示置顶帖子
+     * 帖子的top字段：0不置顶，1置顶
+     */
+    @Override
+    public List<TopicTopVo> listTopTopics(){
+        List<Topic> topics = baseMapper.selectList(Wrappers.<Topic>query()
+                .select("id", "title", "time")
+                .eq("top", 1));
+        return topics.stream().map(topic ->{
+            TopicTopVo vo = new TopicTopVo();
+            BeanUtils.copyProperties(topic, vo);
+            return vo;
+        }).toList();
     }
 
     /**
