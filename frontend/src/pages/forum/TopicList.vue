@@ -1,15 +1,28 @@
 <script setup>
 
 import LightCard from "@/components/LightCard.vue";
-import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
+import {Calendar, Clock, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
 import {computed, ref, reactive} from "vue";
 import {get} from "@/net/index.js"
 import TopicEditor from "@/components/TopicEditor.vue";
 import Weather from "@/components/Weather.vue";
 import {ElMessage} from "element-plus";
+import {useStore} from "@/store/index.js";
+import axios from "axios";
 
 //控制“编辑文章”的卡片是否弹出
 const editor = ref(false)
+const list = ref(null)
+
+//由于帖子类型用到的地方较多，因此在这里拿到后，就存入全局变量里
+const store = useStore()
+get('/api/forum/types', data => store.forum.types = data)
+
+function updateList(){
+  get('/api/forum/list-topic?page=0&type=0', data => list.value = data)
+}
+
+get('/api/forum/list-topic?page=0&type=0', data => list.value = data)
 
 //利用js内置的api得到当前日期
 const today = computed(() => {
@@ -67,8 +80,37 @@ navigator.geolocation.getCurrentPosition(position => {
       </light-card>
       <!--剩下的空间展示帖子列表-->
       <div class="topic-list-container">
-        <light-card style="height: 100px" v-for="item in 10">
-
+        <light-card class="preview-card" v-for="item in list">
+          <div>
+            <div style="display: flex">
+              <div>
+                <el-avatar :size="30" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>
+              </div>
+              <div style="margin-left: 8px;transform: translateY(-2px)">
+                <div style="font-size: 13px;font-weight: bold">{{item.username}}</div>
+                <div style="font-size: 12px;color: grey">
+                  <el-icon><Clock/></el-icon>
+                  <span style="margin-left: 2px;display: inline-block;transform: translateY(-2px)">
+                    {{new Date(item.time).toLocaleString()}}</span>
+                </div>
+              </div>
+            </div>
+            <div class="preview-type-title"
+                 :style="{
+                     color: store.findTypeById(item.type)?.color + 'EE',
+                    'border-color': store.findTypeById(item.type)?.color + '77',
+                    'background': store.findTypeById(item.type)?.color + '33',
+               }">
+              {{store.findTypeById(item.type)?.name}}
+            </div>
+            <span style="font-weight: bold;margin-left: 7px">{{item.title}}</span>
+          </div>
+          <div class="preview-text">
+            <span>{{item.text}}</span>
+          </div>
+          <div class="preview-image-container">
+            <el-image class="preview-image" v-for="img in item.images" :src="img" fit="cover"></el-image>
+          </div>
         </light-card>
       </div>
     </div>
@@ -139,11 +181,11 @@ navigator.geolocation.getCurrentPosition(position => {
       </div>
     </div>
     <!--发表主题卡片，通过editor变量，控制它是否弹出-->
-    <topic-editor :show="editor" @success="editor = false" @close="editor = false"></topic-editor>
+    <topic-editor :show="editor" @success="editor = false;updateList()" @close="editor = false"></topic-editor>
   </div>
 </template>
 
-<style scoped>
+<style lang="less" scoped>
 .container {
   display: flex;
   margin: 20px auto;
@@ -157,6 +199,50 @@ navigator.geolocation.getCurrentPosition(position => {
 
 .right {
   width: 25%;
+}
+
+.preview-card{
+  padding: 15px;
+  transition: scale .3s; /*伸缩的过渡动画*/
+
+  &:hover{
+    scale: 1.016; /*配合上面的transition，鼠标移到卡片上，卡片会有伸缩效果*/
+    cursor: pointer;
+  }
+
+  .preview-type-title{
+    display: inline-block;
+    border: solid 0.5px grey;
+    border-radius: 5px;
+    font-size: 12px;
+    padding: 0 5px;
+    height: 18px;
+    margin-top: 10px;
+  }
+
+  .preview-text{
+    font-size: 13px;
+    color: grey;
+    margin: 5px 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /*展示3行*/
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .preview-image-container{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+
+    .preview-image{
+      width: 100%;
+      height: 100%;
+      max-height: 110px;
+      border-radius: 5px;
+    }
+  }
 }
 
 .create-topic {

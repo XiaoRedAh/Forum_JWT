@@ -10,6 +10,7 @@ import {get, post} from "@/net/index.js"
 import {accessHeader} from "@/net/index.js";
 import {ElMessage} from "element-plus";
 import ColorDot from "@/components/ColorDot.vue";
+import {useStore} from "@/store/index.js";
 
 defineProps({
   show: Boolean
@@ -32,10 +33,7 @@ const article = reactive({
   loading: false
 })
 
-//页面加载后，第一时间先去把帖子类型拉取下来
-let types = []
-get('/api/forum/types', data => types = data)
-
+const store = useStore()
 
 //提取出富文本编辑器中的文本
 function deltaToText(delta){
@@ -167,8 +165,8 @@ const editorOption = {
       <div style="display: flex;gap: 10px">
         <!--选择主题类型-->
         <div>
-          <el-select placeholder="选择主题类型..." value-key="id" v-model="article.type" :disabled="!types.length">
-            <el-option v-for="item in types" :value="item" :label="item.name">
+          <el-select placeholder="选择主题类型..." value-key="id" v-model="article.type" :disabled="!store.forum.types.length">
+            <el-option v-for="item in store.forum.types" :value="item" :label="item.name">
               <div>
                 <color-dot :color="item.color"></color-dot>
                 <span style="margin-left: 10px">{{item.name}}</span>
