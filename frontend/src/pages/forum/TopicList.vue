@@ -1,28 +1,83 @@
 <script setup>
 
 import LightCard from "@/components/LightCard.vue";
-import {Calendar, Clock, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
-import {computed, ref, reactive} from "vue";
+import {
+  Calendar,
+  Clock,
+  CollectionTag,
+  Compass,
+  Document,
+  Edit,
+  EditPen,
+  Link,
+  Microphone,
+  Picture
+} from "@element-plus/icons-vue";
+import {computed, ref, reactive, watch} from "vue";
 import {get} from "@/net/index.js"
 import TopicEditor from "@/components/TopicEditor.vue";
 import Weather from "@/components/Weather.vue";
 import {ElMessage} from "element-plus";
 import {useStore} from "@/store/index.js";
 import axios from "axios";
+import ColorDot from "@/components/ColorDot.vue";
 
 //控制“编辑文章”的卡片是否弹出
 const editor = ref(false)
-const list = ref(null)
 
-//由于帖子类型用到的地方较多，因此在这里拿到后，就存入全局变量里
-const store = useStore()
-get('/api/forum/types', data => store.forum.types = data)
+//帖子列表相关属性
+const topics = reactive({
+  list: [],
+  type: 0,
+  page: 0,
+  top_list: [],
+  end: false //是否到最后了
+})
 
+//根据查询条件查询帖子列表，并且可以无限滚动，直到查到最后一个数据
 function updateList(){
-  get('/api/forum/list-topic?page=0&type=0', data => list.value = data)
+  if(topics.end) return
+  get(`/api/forum/list-topic?page=${topics.page}&type=${topics.type}`, data => {
+    if(data){
+      data.forEach(d => topics.list.push(d))
+      topics.page++
+      topics.list = data
+    }
+    if(!data || data.length < 10)
+      topics.end = true
+  })
 }
 
-get('/api/forum/list-topic?page=0&type=0', data => list.value = data)
+//重置帖子列表(但保留选择的类型)，并重新查询一次
+function resetThenUpdateList(){
+  topics.page = 0
+  topics.list = []
+  topics.end = false
+  updateList()
+}
+
+//新帖子发布后，关闭TopicEditor组件，重置帖子列表(但保留选择的类型)，并重新查询一次
+function onTopicCreate(){
+  editor.value = false
+  resetThenUpdateList()
+}
+
+//监听要查询的帖子列表的类型，一旦变化了，就重置帖子列表(但保留选择的类型)，并重新查询一次
+//immediate表示一开始先获取一次
+watch(() => topics.type, () => resetThenUpdateList(), {immediate: true})
+
+//一加载到页面就先获取一次帖子列表
+updateList()
+//一加载到页面就先获取到置顶帖子
+get('/api/forum/top-topic', data => topics.top_list = data)
+//由于帖子类型用到的地方较多，因此一加载到页面就先拿到所有的类型，并存入全局变量里
+const store = useStore()
+get('/api/forum/types', data => {
+  const array = []
+  array.push({name: '全部', id: 0, color: 'linear-gradient(45deg, white, red, orange, gold, green, blue'})
+  data.forEach(d => array.push(d))
+  store.forum.types = array
+})
 
 //利用js内置的api得到当前日期
 const today = computed(() => {
@@ -73,46 +128,76 @@ navigator.geolocation.getCurrentPosition(position => {
           </el-icon>
           点击发表主题...
         </div>
+        <div style="margin-top: 10px;display: flex;gap:13px;font-size: 18px;color: grey">
+          <el-icon><Edit/></el-icon>
+          <el-icon><Document/></el-icon>
+          <el-icon><Compass/></el-icon>
+          <el-icon><Picture/></el-icon>
+          <el-icon><Microphone/></el-icon>
+        </div>
       </light-card>
-      <!--接下来分出一个框展示置顶的帖子-->
-      <light-card class="topping-topic">
-
+      <!--展示置顶的帖子-->
+      <light-card style="margin-top: 10px;height: 50px;display: flex;flex-direction: column;gap: 10px">
+        <div v-for="item in topics.top_list" class="topping-topic">
+          <el-tag type="info" size="small">置顶</el-tag>
+          <div>{{item.title}}</div>
+          <div>{{new Date(item.time).toLocaleDateString()}}</div>
+        </div>
+      </light-card>
+      <!--选择展示什么类型的帖子-->
+      <light-card style="margin-top: 10px;display: flex;gap: 10px">
+        <div v-for="item in store.forum.types"
+            :class="`type-select ${topics.type === item.id ? 'active' : ''}`"
+              @click="topics.type = item.id">
+          <color-dot :color="item.color"/>
+          <span>{{item.name}}</span>
+        </div>
       </light-card>
       <!--剩下的空间展示帖子列表-->
-      <div class="topic-list-container">
-        <light-card class="preview-card" v-for="item in list">
-          <div>
-            <div style="display: flex">
+      <transition name="el-fade-in" mode="out-in">
+        <div v-if="topics.list.length">
+          <div class="topic-list-container" v-infinite-scroll="updateList">
+            <light-card class="preview-card" v-for="item in topics.list">
+              <!--卡片上半部分展示些信息：头像，作者名字，创建时间，帖子类型，帖子标题-->
               <div>
-                <el-avatar :size="30" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>
-              </div>
-              <div style="margin-left: 8px;transform: translateY(-2px)">
-                <div style="font-size: 13px;font-weight: bold">{{item.username}}</div>
-                <div style="font-size: 12px;color: grey">
-                  <el-icon><Clock/></el-icon>
-                  <span style="margin-left: 2px;display: inline-block;transform: translateY(-2px)">
+                <!--头像 + 作者名字 + 创建时间-->
+                <div style="display: flex">
+                  <!--头像-->
+                  <div>
+                    <el-avatar :size="32" :src="`${axios.defaults.baseURL}/images${item.avatar}`"/>
+                  </div>
+                  <!--作者名字+创建时间-->
+                  <div style="margin-left: 8px;transform: translateY(-1px)">
+                    <div style="font-size: 14px;font-weight: bold">{{item.username}}</div>
+                    <div style="font-size: 13px;color: grey">
+                      <el-icon><Clock/></el-icon>
+                      <span style="margin-left: 2px;display: inline-block;transform: translateY(-2px)">
                     {{new Date(item.time).toLocaleString()}}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            <div class="preview-type-title"
-                 :style="{
+                <!--帖子类型 + 帖子标题-->
+                <div class="preview-type-title"
+                     :style="{
                      color: store.findTypeById(item.type)?.color + 'EE',
                     'border-color': store.findTypeById(item.type)?.color + '77',
                     'background': store.findTypeById(item.type)?.color + '33',
                }">
-              {{store.findTypeById(item.type)?.name}}
-            </div>
-            <span style="font-weight: bold;margin-left: 7px">{{item.title}}</span>
+                  {{store.findTypeById(item.type)?.name}}
+                </div>
+                <span style="font-weight: bold;margin-left: 7px;font-size: 18px">{{item.title}}</span>
+              </div>
+              <!--卡片下半部分展示：帖子内容预览 + 图片预览-->
+              <div class="preview-text">
+                {{item.text}}
+              </div>
+              <div class="preview-image-container">
+                <el-image class="preview-image" v-for="img in item.images" :src="img" fit="cover"></el-image>
+              </div>
+            </light-card>
           </div>
-          <div class="preview-text">
-            <span>{{item.text}}</span>
-          </div>
-          <div class="preview-image-container">
-            <el-image class="preview-image" v-for="img in item.images" :src="img" fit="cover"></el-image>
-          </div>
-        </light-card>
-      </div>
+        </div>
+      </transition>
     </div>
 
     <!--右侧装一些卡片丰富一下-->
@@ -181,7 +266,7 @@ navigator.geolocation.getCurrentPosition(position => {
       </div>
     </div>
     <!--发表主题卡片，通过editor变量，控制它是否弹出-->
-    <topic-editor :show="editor" @success="editor = false;updateList()" @close="editor = false"></topic-editor>
+    <topic-editor :show="editor" @success="onTopicCreate" @close="editor = false"></topic-editor>
   </div>
 </template>
 
@@ -201,50 +286,6 @@ navigator.geolocation.getCurrentPosition(position => {
   width: 25%;
 }
 
-.preview-card{
-  padding: 15px;
-  transition: scale .3s; /*伸缩的过渡动画*/
-
-  &:hover{
-    scale: 1.016; /*配合上面的transition，鼠标移到卡片上，卡片会有伸缩效果*/
-    cursor: pointer;
-  }
-
-  .preview-type-title{
-    display: inline-block;
-    border: solid 0.5px grey;
-    border-radius: 5px;
-    font-size: 12px;
-    padding: 0 5px;
-    height: 18px;
-    margin-top: 10px;
-  }
-
-  .preview-text{
-    font-size: 13px;
-    color: grey;
-    margin: 5px 0;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3; /*展示3行*/
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .preview-image-container{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 10px;
-
-    .preview-image{
-      width: 100%;
-      height: 100%;
-      max-height: 110px;
-      border-radius: 5px;
-    }
-  }
-}
-
 .create-topic {
   background-color: #efefef;
   color: grey;
@@ -253,19 +294,76 @@ navigator.geolocation.getCurrentPosition(position => {
   line-height: 40px;
   font-size: 14px;
   padding: 0 10px;
+
+  &:hover {
+    cursor: pointer;
+  }
 }
 
-.dark .create-topic{
+.dark .create-topic {
   background-color: #232323;
 }
 
-.create-topic:hover {
-  cursor: pointer;
+.topping-topic {
+  display: flex;
+  &:hover{
+    cursor: pointer;
+  }
+  /*第一个div盒子：置顶帖子的标题*/
+  div:first-of-type{
+    font-size: 14px;
+    margin-left: 10px;
+    font-weight: bold;
+    opacity: 0.8; /*给标题来点不透明度*/
+    transition: color .3s; /*标题颜色发生变化时，会有0.3s的渐变时间*/
+    &:hover{
+      /*配合上面的transition，鼠标移动到标题上，标题变为灰色，有一个0.3s的渐变时间*/
+      color: grey;
+    }
+  }
+  /*第二个div盒子：置顶帖子的创建时间*/
+  div:nth-of-type(2){
+    flex: 1;
+    color: grey;
+    font-size: 13px;
+    text-align: right; /*行内容右对齐，把时间显示在最右侧*/
+  }
 }
 
-.topping-topic {
-  margin-top: 10px;
-  height: 50px
+/*针对每一个可供选择的帖子类型盒子*/
+.type-select{
+  background-color: #f5f5f5;
+  padding: 2px 7px;
+  font-size: 14px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  transition: background-color .3s; /*背景颜色变化时，会有0.3s的渐变时间*/
+
+  /*被选中的类型盒子，边框有颜色做区分
+  &.active 是一个类选择器，表示活动状态下的样式。要和&:active区分*/
+  &.active{
+    border: solid 2px #ead4c4;
+  }
+
+  &:hover{
+    cursor: pointer;
+    /*配上上面的transition，鼠标放在类型上面时，背景颜色变，且有0.3s的渐变时间*/
+    background-color: #dadada;
+  }
+}
+
+.dark .type-select{
+  background-color: #282828;
+  /*被选中的类型盒子，边框有颜色做区分
+  &.active 是一个类选择器，表示活动状态下的样式。要和&:active区分*/
+  &.active{
+    border: solid 2px #64594b;
+  }
+
+  &:hover{
+    /*配上上面的transition，鼠标放在类型上面时，背景颜色变，且有0.3s的渐变时间*/
+    background-color: #5e5e5e;
+  }
 }
 
 .topic-list-container {
@@ -273,6 +371,51 @@ navigator.geolocation.getCurrentPosition(position => {
   display: flex;
   flex-direction: column;
   gap: 15px
+}
+
+.preview-card{
+  padding: 15px;
+  transition: scale .3s; /*卡片发生伸缩时，会有0.3s的过渡时间*/
+
+  &:hover{
+    scale: 1.016; /*配合上面的transition，鼠标移到卡片上，卡片会有伸缩效果，过渡时间0.3s*/
+    cursor: pointer;
+  }
+  /*预览帖子类型和标题*/
+  .preview-type-title{
+    display: inline-block;
+    border: solid 0.5px grey;
+    border-radius: 5px;
+    font-size: 13px;
+    padding: 0 5px;
+    height: 18px;
+    margin-top: 5px;
+  }
+  /*预览帖子内容*/
+  .preview-text{
+    font-size: 14px;
+    color: grey;
+    margin: 5px 0;
+    /*最多展示三行，超出的用省略号代替*/
+    /*-webkit-前缀是为了兼容旧版WebKit浏览器（如旧版Chrome和Safari）*/
+    display: -webkit-box; /*设置为基于Flexbox布局的容器*/
+    -webkit-box-orient: vertical; /*设置布局容器的主轴方向为垂直方向*/
+    -webkit-line-clamp: 3; /*最大展示3行*/
+    overflow: hidden; /*超出行数的文本将被隐藏*/
+    text-overflow: ellipsis; /*当文本被截断时，用省略号代替*/
+  }
+  /*预览图片，最多展示三个图片*/
+  .preview-image-container{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /*网格划分为3列，并且每列的宽度都平均分配*/
+    grid-gap: 10px;
+    .preview-image{
+      width: 100%;
+      height: 100%;
+      max-height: 110px;
+      border-radius: 5px;
+    }
+  }
 }
 
 .card-container {
