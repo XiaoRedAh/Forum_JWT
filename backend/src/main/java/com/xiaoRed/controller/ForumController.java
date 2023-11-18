@@ -2,7 +2,7 @@ package com.xiaoRed.controller;
 
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
-import com.xiaoRed.entity.vo.TopicTypeVo;
+import com.xiaoRed.entity.vo.response.TopicTypeVo;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
@@ -65,19 +65,19 @@ public class ForumController {
 
     /**
      * 根据选定查第几页和选定的帖子类型展示帖子列表
-     * @param page 展示的是第几页
+     * @param page 展示的是第几页,由于mybatis-plus分页器的页号从1开始，因此实际要+1
      * @param type 展示的帖子类型，全选则为0
      */
     @GetMapping("/list-topic")
     public RestBean<List<TopicPreviewVo>> listTopic(@RequestParam @Min(0) int page,
                                               @RequestParam @Min(0) int type){
-        return RestBean.success(topicService.listTopicByPage(page, type));
+        return RestBean.success(topicService.listTopicByPage(page + 1, type));
     }
 
     /**
      * 展示置顶帖子
      */
-    @GetMapping("top-topic")
+    @GetMapping("/top-topic")
     public RestBean<List<TopicTopVo>> TopTopic(){
         return RestBean.success(topicService.listTopTopics());
     }

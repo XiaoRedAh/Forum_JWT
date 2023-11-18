@@ -5,7 +5,7 @@ import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.dto.Account;
 import com.xiaoRed.entity.dto.AccountDetails;
 import com.xiaoRed.entity.dto.AccountPrivacy;
-import com.xiaoRed.entity.vo.AccountVo;
+import com.xiaoRed.entity.vo.response.AccountVo;
 import com.xiaoRed.entity.vo.request.ChangePawVo;
 import com.xiaoRed.entity.vo.request.DetailsSaveVo;
 import com.xiaoRed.entity.vo.request.ModifyEmailVo;
@@ -40,7 +40,6 @@ public class AccountController {
     /**
      * 获取用户相关信息，将这些信息封装为一个vo返回给前端
      * @param id JwtAuthorizeFilter已经往请求域中塞进了用户id，直接从请求域里取出来就行
-     * @return
      */
     @GetMapping("/info")
     public RestBean<AccountVo> info(@RequestAttribute(Const.ATTR_USER_ID) int id){
@@ -51,7 +50,6 @@ public class AccountController {
     /**
      * 获取用户详细信息，封装为vo对象，展示到前端
      * @param id JwtAuthorizeFilter已经往请求域中塞进了用户id，直接从请求域里取出来就行
-     * @return
      */
     @GetMapping("/details")
     public RestBean<AccountDetailsVo> details(@RequestAttribute(Const.ATTR_USER_ID) int id){
@@ -66,7 +64,6 @@ public class AccountController {
      * 保存账户详细信息
      * @param id JwtAuthorizeFilter已经往请求域中塞进了用户id，直接从请求域里取出来就行
      * @param vo 前端保存账户详细信息表单提交的内容封装为一个vo
-     * @return
      */
     @PostMapping("/save-details")
     public RestBean<Void> saveDetails(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid DetailsSaveVo vo){
@@ -78,7 +75,6 @@ public class AccountController {
      * 修改账号绑定的电子邮箱
      * @param id 账号对应的id
      * @param vo 前端传过来的新电子邮箱地址和验证码封装为vo
-     * @return
      */
     @PostMapping("/modify-email")
     public RestBean<Void> modifyEmail(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid ModifyEmailVo vo){
@@ -90,7 +86,6 @@ public class AccountController {
      * 修改密码功能【与忘记密码的重置密码区分】
      * @param id 账号id
      * @param vo 前端传来的原密码，新密码封装为vo
-     * @return
      */
     @PostMapping("/change-password")
     public RestBean<Void> changePassword(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid ChangePawVo vo){
@@ -100,8 +95,7 @@ public class AccountController {
 
     /**
      * 返回账号的隐私设置，展示在前端
-     * @param id
-     * @return
+     * @param id 用户id
      */
     @GetMapping("/privacy")
     public RestBean<AccountPrivacyVo> privacy(@RequestAttribute(Const.ATTR_USER_ID) int id){
@@ -111,9 +105,6 @@ public class AccountController {
 
     /**
      * 保存隐私设置
-     * @param id
-     * @param vo
-     * @return
      */
     @PostMapping("/save-privacy")
     public RestBean<Void> savePrivacy(@RequestAttribute(Const.ATTR_USER_ID) int id, @RequestBody @Valid SavePrivacyVo vo){

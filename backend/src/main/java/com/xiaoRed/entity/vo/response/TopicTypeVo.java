@@ -1,4 +1,4 @@
-package com.xiaoRed.entity.vo;
+package com.xiaoRed.entity.vo.response;
 
 import lombok.Data;
 

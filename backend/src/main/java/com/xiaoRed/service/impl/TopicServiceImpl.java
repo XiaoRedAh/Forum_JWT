@@ -3,6 +3,7 @@ package com.xiaoRed.service.impl;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.Topic;
@@ -10,6 +11,7 @@ import com.xiaoRed.entity.dto.TopicType;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
+import com.xiaoRed.mapper.AccountMapper;
 import com.xiaoRed.mapper.TopicMapper;
 import com.xiaoRed.mapper.TopicTypeMapper;
 import com.xiaoRed.service.TopicService;
@@ -27,6 +29,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     @Resource
     TopicTypeMapper topicTypeMapper;
+
+    @Resource
+    AccountMapper accountMapper;
 
     @Resource
     CacheUtil cacheUtil;
@@ -83,22 +88,21 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     /**
      * 根据选定查第几页和选定的帖子类型展示帖子列表
-     * topicList(page*10)和topicListByType(page*10, type)的start都是page*10，其实就是一页展示10个帖子
-     * 展示的是第0页，则是查询到的数据的0~9条；展示的是第1页，则是查询到的数据的10~19条...
-     * @param page 展示的是第几页
+     * @param pageNum 展示的是第几页
      * @param type 展示的帖子类型，全选则为0
      */
     @Override
-    public List<TopicPreviewVo> listTopicByPage(int page, int type){
-        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + page + ":" + type;
+    public List<TopicPreviewVo> listTopicByPage(int pageNum, int type){
+        String key = Const.FORUM_TOPIC_PREVIEW_CACHE + pageNum + ":" + type;
         List<TopicPreviewVo> previewVoList = cacheUtil.takeListFromCache(key, TopicPreviewVo.class); //先去缓存里拿
         if (previewVoList != null) return previewVoList; //从缓存中取到，就不用再去数据库里请求了
 
-        List<Topic> topics;
+        Page<Topic> page = Page.of(pageNum, 10); //mybatis-plus的分页器页号是从1开始的
         if(type == 0)
-            topics = baseMapper.topicList(page*10);
+            baseMapper.selectPage(page, Wrappers.<Topic>query().orderByDesc("time"));
         else
-            topics = baseMapper.topicListByType(page*10, type);
+            baseMapper.selectPage(page, Wrappers.<Topic>query().eq("type", type).orderByDesc("time"));
+        List<Topic> topics = page.getRecords();
         if(topics.isEmpty()) return null;
         previewVoList = topics.stream().map(this::resolveToPreview).toList(); //转化为TopicPreviewVo的列表
         cacheUtil.saveListToCache(key, previewVoList, 60); //拿到要求的帖子列表后，先存到缓存中
@@ -145,6 +149,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     private TopicPreviewVo resolveToPreview(Topic topic){
         TopicPreviewVo vo = new TopicPreviewVo();
+        BeanUtils.copyProperties(accountMapper.selectById(topic.getUid()), vo); //用户信息单独查到，把需要的复制给vo
         BeanUtils.copyProperties(topic, vo); //先把topic中的同名属性复制给vo
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
