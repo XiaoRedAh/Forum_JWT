@@ -2,11 +2,8 @@ package com.xiaoRed.controller;
 
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
-import com.xiaoRed.entity.vo.response.TopicTypeVo;
+import com.xiaoRed.entity.vo.response.*;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
-import com.xiaoRed.entity.vo.response.TopicPreviewVo;
-import com.xiaoRed.entity.vo.response.TopicTopVo;
-import com.xiaoRed.entity.vo.response.WeatherVo;
 import com.xiaoRed.service.TopicService;
 import com.xiaoRed.service.WeatherService;
 import jakarta.annotation.Resource;
@@ -80,6 +77,15 @@ public class ForumController {
     @GetMapping("/top-topic")
     public RestBean<List<TopicTopVo>> TopTopic(){
         return RestBean.success(topicService.listTopTopics());
+    }
+
+    /**
+     * 帖子详情
+     * @param tid 帖子id
+     */
+    @GetMapping("/topic")
+    public RestBean<TopicDetailVo> Topic(@RequestParam @Min(0) int tid){
+        return RestBean.success(topicService.getTopic(tid));
     }
 
 }

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.xiaoRed.entity.dto.Topic;
 import com.xiaoRed.entity.dto.TopicType;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
+import com.xiaoRed.entity.vo.response.TopicDetailVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
 
@@ -18,5 +19,7 @@ public interface TopicService extends IService<Topic> {
     List<TopicPreviewVo> listTopicByPage(int page, int type);
 
     List<TopicTopVo> listTopTopics();
+
+    TopicDetailVo getTopic(int tid);
 }
 

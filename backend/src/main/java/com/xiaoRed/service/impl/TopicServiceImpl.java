@@ -6,14 +6,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
-import com.xiaoRed.entity.dto.Topic;
-import com.xiaoRed.entity.dto.TopicType;
+import com.xiaoRed.entity.dto.*;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
+import com.xiaoRed.entity.vo.response.TopicDetailVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
-import com.xiaoRed.mapper.AccountMapper;
-import com.xiaoRed.mapper.TopicMapper;
-import com.xiaoRed.mapper.TopicTypeMapper;
+import com.xiaoRed.mapper.*;
 import com.xiaoRed.service.TopicService;
 import com.xiaoRed.utils.CacheUtil;
 import jakarta.annotation.PostConstruct;
@@ -29,10 +27,12 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     @Resource
     TopicTypeMapper topicTypeMapper;
-
     @Resource
     AccountMapper accountMapper;
-
+    @Resource
+    AccountDetailsMapper accountDetailsMapper;
+    @Resource
+    AccountPrivacyMapper accountPrivacyMapper;
     @Resource
     CacheUtil cacheUtil;
 
@@ -123,6 +123,40 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             BeanUtils.copyProperties(topic, vo);
             return vo;
         }).toList();
+    }
+
+    /**
+     * 帖子详情
+     * 帖子详情包含帖子信息和用户信息，不要联表查询，分开获取即可
+     * @param tid 帖子id
+     */
+    @Override
+    public TopicDetailVo getTopic(int tid) {
+        TopicDetailVo vo = new TopicDetailVo();
+        //封装帖子详情的帖子相关信息
+        Topic topic = baseMapper.selectById(tid);
+        BeanUtils.copyProperties(topic, vo);
+        //封装帖子详情的用户相关信息
+        TopicDetailVo.User user = new TopicDetailVo.User();
+        vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
+        return null;
+    }
+
+    /**
+     * 获得帖子详情需要的用户信息并返回
+     * 注意：需要考虑用户的隐私设置
+     * @param target 列表详情需要的用户信息
+     * @param uid 用户id
+     */
+    private <T> T fillUserDetailsByPrivacy(T target, int uid){
+        Account account = accountMapper.selectById(uid);
+        AccountDetails details = accountDetailsMapper.selectById(uid);
+        AccountPrivacy accountPrivacy = accountPrivacyMapper.selectById(uid);
+        String[] ignores = accountPrivacy.hiddenFields(); //获得隐私设置中，需要隐藏的属性的字段名
+        BeanUtils.copyProperties(account, target, ignores); //将同名属性的值拷贝给target，ignores中的字段将被忽略，不会被拷贝，起到隐私保护作用
+        BeanUtils.copyProperties(details, target, ignores); //将同名属性的值拷贝给target，ignores中的字段将被忽略，不会被拷贝，起到隐私保护作用
+        return target;
+
     }
 
     /**
