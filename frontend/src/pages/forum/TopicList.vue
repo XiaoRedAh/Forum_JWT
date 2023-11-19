@@ -21,6 +21,10 @@ import {ElMessage} from "element-plus";
 import {useStore} from "@/store/index.js";
 import axios from "axios";
 import ColorDot from "@/components/ColorDot.vue";
+import router from "@/router/index.js";
+import TopicTag from "@/components/home/TopicTag.vue";
+
+const store = useStore()
 
 //控制“编辑文章”的卡片是否弹出
 const editor = ref(false)
@@ -70,14 +74,6 @@ watch(() => topics.type, () => resetThenUpdateList(), {immediate: true})
 updateList()
 //一加载到页面就先获取到置顶帖子
 get('/api/forum/top-topic', data => topics.top_list = data)
-//由于帖子类型用到的地方较多，因此一加载到页面就先拿到所有的类型，并存入全局变量里
-const store = useStore()
-get('/api/forum/types', data => {
-  const array = []
-  array.push({name: '全部', id: 0, color: 'linear-gradient(45deg, white, red, orange, gold, green, blue'})
-  data.forEach(d => array.push(d))
-  store.forum.types = array
-})
 
 //利用js内置的api得到当前日期
 const today = computed(() => {
@@ -138,7 +134,7 @@ navigator.geolocation.getCurrentPosition(position => {
       </light-card>
       <!--展示置顶的帖子-->
       <light-card style="margin-top: 10px;height: 50px;display: flex;flex-direction: column;gap: 10px">
-        <div v-for="item in topics.top_list" class="topping-topic">
+        <div v-for="item in topics.top_list" class="topping-topic" @click="router.push(`/home/topic-detail/${item.id}`)">
           <el-tag type="info" size="small">置顶</el-tag>
           <div>{{item.title}}</div>
           <div>{{new Date(item.time).toLocaleDateString()}}</div>
@@ -157,7 +153,7 @@ navigator.geolocation.getCurrentPosition(position => {
       <transition name="el-fade-in" mode="out-in">
         <div v-if="topics.list.length">
           <div class="topic-list-container" v-infinite-scroll="updateList">
-            <light-card class="preview-card" v-for="item in topics.list">
+            <light-card class="preview-card" v-for="item in topics.list" @click="router.push(`/home/topic-detail/${item.id}`)">
               <!--卡片上半部分展示些信息：头像，作者名字，创建时间，帖子类型，帖子标题-->
               <div>
                 <!--头像 + 作者名字 + 创建时间-->
@@ -177,14 +173,7 @@ navigator.geolocation.getCurrentPosition(position => {
                   </div>
                 </div>
                 <!--帖子类型 + 帖子标题-->
-                <div class="preview-type-title"
-                     :style="{
-                     color: store.findTypeById(item.type)?.color + 'EE',
-                    'border-color': store.findTypeById(item.type)?.color + '77',
-                    'background': store.findTypeById(item.type)?.color + '33',
-               }">
-                  {{store.findTypeById(item.type)?.name}}
-                </div>
+                <topic-tag :type="item.type"/>
                 <span style="font-weight: bold;margin-left: 7px;font-size: 18px">{{item.title}}</span>
               </div>
               <!--卡片下半部分展示：帖子内容预览 + 图片预览-->
@@ -380,16 +369,6 @@ navigator.geolocation.getCurrentPosition(position => {
   &:hover{
     scale: 1.016; /*配合上面的transition，鼠标移到卡片上，卡片会有伸缩效果，过渡时间0.3s*/
     cursor: pointer;
-  }
-  /*预览帖子类型和标题*/
-  .preview-type-title{
-    display: inline-block;
-    border: solid 0.5px grey;
-    border-radius: 5px;
-    font-size: 13px;
-    padding: 0 5px;
-    height: 18px;
-    margin-top: 5px;
   }
   /*预览帖子内容*/
   .preview-text{

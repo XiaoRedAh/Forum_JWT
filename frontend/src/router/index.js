@@ -31,10 +31,22 @@ const router = createRouter({
             name: 'home',
             component: ()=>import('@/pages/HomeIndex.vue'),
             children: [
-                {
+                { //默认展示帖子广场
                     path: '',
-                    name: 'topic-list',
-                    component: ()=>import('@/pages/forum/TopicList.vue')
+                    name: 'topics',
+                    component: ()=>import('@/pages/forum/Forum.vue'),
+                    children: [
+                        { //默认展示帖子列表
+                            path: '',
+                            name: 'topic-list',
+                            component: ()=>import('@/pages/forum/TopicList.vue')
+                        },
+                        { //展示帖子详情
+                            path: 'topic-detail/:tid',
+                            name: 'topic-detail',
+                            component: ()=>import('@/pages/forum/TopicDetail.vue')
+                        },
+                    ]
                 },
                 {
                     path: 'user-setting',

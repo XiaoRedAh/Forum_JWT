@@ -15,6 +15,7 @@
     "axios": "^1.4.0",
     "element-plus": "^2.3.9",
     "pinia": "^2.1.6",
+    "quill-delta-to-html": "^0.12.1",
     "quill-image-resize-vue": "^1.0.4",
     "quill-image-super-solution-module": "^2.0.1",
     "vue": "^3.3.4",

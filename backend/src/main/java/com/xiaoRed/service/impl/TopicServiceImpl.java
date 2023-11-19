@@ -139,7 +139,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         //封装帖子详情的用户相关信息
         TopicDetailVo.User user = new TopicDetailVo.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
-        return null;
+        return vo;
     }
 
     /**
@@ -154,7 +154,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         AccountPrivacy accountPrivacy = accountPrivacyMapper.selectById(uid);
         String[] ignores = accountPrivacy.hiddenFields(); //获得隐私设置中，需要隐藏的属性的字段名
         BeanUtils.copyProperties(account, target, ignores); //将同名属性的值拷贝给target，ignores中的字段将被忽略，不会被拷贝，起到隐私保护作用
-        BeanUtils.copyProperties(details, target, ignores); //将同名属性的值拷贝给target，ignores中的字段将被忽略，不会被拷贝，起到隐私保护作用
+        if (details!=null)
+            BeanUtils.copyProperties(details, target, ignores); //将同名属性的值拷贝给target，ignores中的字段将被忽略，不会被拷贝，起到隐私保护作用
         return target;
 
     }
