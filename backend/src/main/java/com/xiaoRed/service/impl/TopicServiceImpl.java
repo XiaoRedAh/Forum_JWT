@@ -201,7 +201,6 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             }
         }
         //这里还要切割出前300个字符，因为之前取insert时，可能很长，直接就超300了
-        System.out.println(previewText);
         vo.setText(previewText.length() > 300 ? previewText.substring(0, 300) : previewText.toString());
         vo.setImages(images);
         return vo;

@@ -84,7 +84,7 @@ public class ForumController {
      * @param tid 帖子id
      */
     @GetMapping("/topic")
-    public RestBean<TopicDetailVo> Topic(@RequestParam @Min(0) int tid){
+    public RestBean<TopicDetailVo> Topic(@RequestParam int tid){
         return RestBean.success(topicService.getTopic(tid));
     }
 
