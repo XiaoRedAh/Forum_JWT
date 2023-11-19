@@ -2,6 +2,7 @@ package com.xiaoRed.controller;
 
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
+import com.xiaoRed.entity.dto.Interact;
 import com.xiaoRed.entity.vo.response.*;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.service.TopicService;
@@ -9,8 +10,10 @@ import com.xiaoRed.service.WeatherService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -87,5 +90,22 @@ public class ForumController {
     public RestBean<TopicDetailVo> Topic(@RequestParam int tid){
         return RestBean.success(topicService.getTopic(tid));
     }
+
+    /**
+     * 交互操作：包括帖子点赞，收藏，转发等操作，通过type来区分
+     * @param tid 帖子id
+     * @param type 交互操作的类型，用正则表达式来做一次校验：like点赞，collect收藏
+     * @param state 状态：点赞/收藏为true，取消点赞/取消收藏为false
+     * @param uid 用户id
+     */
+    @GetMapping("/interact")
+    public RestBean<Void> interact(@RequestParam int tid,
+                                   @RequestParam @Pattern(regexp = "(like|collect)") String type,
+                                   @RequestParam boolean state,
+                                   @RequestAttribute(Const.ATTR_USER_ID) int uid){
+        topicService.interact(new Interact(tid, uid, new Date(), type), state);
+        return RestBean.success();
+    }
+
 
 }

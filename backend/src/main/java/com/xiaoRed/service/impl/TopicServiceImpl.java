@@ -17,9 +17,13 @@ import com.xiaoRed.utils.CacheUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +37,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     AccountDetailsMapper accountDetailsMapper;
     @Resource
     AccountPrivacyMapper accountPrivacyMapper;
+
+    @Resource
+    StringRedisTemplate template;
     @Resource
     CacheUtil cacheUtil;
 
@@ -143,6 +150,66 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
+     * 交互功能：点赞，收藏
+     * 由于论坛交互数据（如点赞、收藏等）更新可能会非常频繁，更新信息实时到MySQL不太现实
+     * 所以需要用Redis做缓冲并在合适的时机一次性入库一段时间内的数据
+     * 当数据更新到来时，会创建一个新的定时任务，此任务会在一段时间之后执行，将全部Redis暂时缓存的信息一次性加入到数据库，从而缓解MySQL压力
+     * 如果在定时任务已经设定期间，又有新的更新到来，仅更新Redis不创建新的延时任务
+     * @param interact 交互操作信息
+     * @param state 交互操作的状态：点赞/取消点赞，收藏/取消收藏
+     */
+    @Override
+    public void interact(Interact interact, boolean state){
+        String type = interact.getType();
+        synchronized (type.intern()){ //数据入库过程中，不允许新数据到来(防止可能的数据丢失)
+            //这里存到哈希表里，因为点赞/收藏无论外面点多少次，就只有两种结果，相同key的在哈希表中不断覆盖，就留下最终的那次即可
+            template.opsForHash().put(type, interact.toKey(),state); //键=type:tid:uid，键值=state
+            this.saveInteractSchedule(type); //利用定时任务进行持久化
+        }
+    }
+
+    private final Map<String, Boolean> state = new HashMap<>(); //记录该类型的任务是否已经开始计时了
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
+    /**
+     * 定时任务
+     */
+    private void saveInteractSchedule(String type){
+        //该类型的任务还没有开始计时/压根就没有这个任务，则创建定时任务
+        if(!state.getOrDefault(type, false)){
+            state.put(type, true);
+            service.schedule(()->{
+                this.saveInteract(type);
+                state.put(type, false);
+            }, 3, TimeUnit.SECONDS); //3s的定时任务
+        }
+    }
+
+    /**
+     * 交互信息持久化
+     * 将缓存中点赞/收藏的交互信息一次性入库，将缓存中取消点赞/取消收藏的交互信息从数据库中一次性删除
+     * @param type 本次持久化的交互信息的类型
+     */
+    private void saveInteract(String type){
+        synchronized (type.intern()){ //数据入库过程中，不允许新数据到来(防止可能的数据丢失)
+            List<Interact> checked =  new LinkedList<>(); //存储缓存中“勾选”的交互信息(即点赞/收藏这种正向的操作)
+            List<Interact> cancel = new LinkedList<>(); //存储缓存中”取消“的交互信息
+            template.opsForHash().entries(type).forEach((k, v) -> {
+                if(Boolean.parseBoolean(v.toString())) //拿到是键值state为true，正向操作
+                    checked.add(Interact.parseInteract(k.toString(), type));
+                else
+                    cancel.add(Interact.parseInteract(k.toString(), type));
+            });
+            if(!checked.isEmpty())
+                baseMapper.addInteract(checked, type);
+            if(!cancel.isEmpty())
+                baseMapper.deleteInteract(cancel, type);
+            template.delete(type);
+
+        }
+
+    }
+
+    /**
      * 获得帖子详情需要的用户信息并返回
      * 注意：需要考虑用户的隐私设置
      * @param target 列表详情需要的用户信息
@@ -157,7 +224,6 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         if (details!=null)
             BeanUtils.copyProperties(details, target, ignores); //将同名属性的值拷贝给target，ignores中的字段将被忽略，不会被拷贝，起到隐私保护作用
         return target;
-
     }
 
     /**
