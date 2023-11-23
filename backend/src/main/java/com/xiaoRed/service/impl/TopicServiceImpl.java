@@ -151,17 +151,18 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     /**
      * 帖子详情
      * 帖子详情包含帖子信息和用户信息，不要联表查询，分开获取即可
+     * @param uid 当前用户id
      * @param tid 帖子id
      */
     @Override
-    public TopicDetailVo getTopic(int tid) {
+    public TopicDetailVo getTopic(int uid, int tid) {
         TopicDetailVo vo = new TopicDetailVo();
         //封装帖子详情的帖子相关信息
         Topic topic = baseMapper.selectById(tid);
         BeanUtils.copyProperties(topic, vo);
         TopicDetailVo.Interact interact = new TopicDetailVo.Interact(
-                hasInteract(tid, topic.getUid(), "like"),
-                hasInteract(tid, topic.getUid(), "collect")
+                hasInteract(tid, uid, "like"),
+                hasInteract(tid, uid, "collect")
         );
         vo.setInteract(interact);
         //封装帖子详情的用户相关信息

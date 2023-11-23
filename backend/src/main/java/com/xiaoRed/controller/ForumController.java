@@ -84,11 +84,12 @@ public class ForumController {
 
     /**
      * 帖子详情
+     * @param uid 当前用户id
      * @param tid 帖子id
      */
     @GetMapping("/topic")
-    public RestBean<TopicDetailVo> Topic(@RequestParam int tid){
-        return RestBean.success(topicService.getTopic(tid));
+    public RestBean<TopicDetailVo> Topic(@RequestAttribute(Const.ATTR_USER_ID) int uid, @RequestParam int tid){
+        return RestBean.success(topicService.getTopic(uid, tid));
     }
 
     /**
