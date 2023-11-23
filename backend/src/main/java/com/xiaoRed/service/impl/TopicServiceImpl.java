@@ -15,6 +15,7 @@ import com.xiaoRed.entity.vo.response.TopicDetailVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
 import com.xiaoRed.mapper.*;
+import com.xiaoRed.service.NotificationService;
 import com.xiaoRed.service.TopicService;
 import com.xiaoRed.utils.CacheUtil;
 import jakarta.annotation.PostConstruct;
@@ -41,9 +42,10 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     AccountDetailsMapper accountDetailsMapper;
     @Resource
     AccountPrivacyMapper accountPrivacyMapper;
-
     @Resource
     TopicCommentMapper topicCommentMapper;
+    @Resource
+    NotificationService notificationService;
 
     @Resource
     StringRedisTemplate template;
@@ -135,11 +137,35 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         //验证评论长度是否超出长度限制，评论最多2000字
         if(!contentLimitCheck(JSONObject.parseObject(vo.getContent()), 2000))
             return "评论内容超出长度限制，评论失败！";
+        //封装并发表评论
         TopicComment comment = new TopicComment();
         BeanUtils.copyProperties(vo, comment); //把同名属性拷贝到comment
         comment.setUid(uid);
         comment.setTime(new Date());
         topicCommentMapper.insert(comment);
+        //然后发送通知提醒
+        Topic topic = baseMapper.selectById(vo.getTid()); //拿到这个被评论的文章
+        Account account = accountMapper.selectById(uid); //拿到评论者
+        if(vo.getQuote() > 0){ //如果发表的这条评论引用了其他评论
+            TopicComment com = topicCommentMapper.selectById(vo.getQuote()); //获取被引用的评论
+            if(Objects.equals(account.getId(), com.getUid())){ //如果被引用的评论不是自己的，则向被引用评论的用户发消息提醒
+                notificationService.addNotification(
+                        com.getUid(),
+                        "您有新的评论回复",
+                        account.getPassword() + "回复了你的评论，快去看看吧!",
+                        "success",
+                        "/index/topic-detail/"+com.getTid()
+                );
+            }else if(Objects.equals(account.getId(), topic.getUid())){ //如果发表此次评论的用户不是该帖的作者，则向该帖作者发送消息提醒
+                notificationService.addNotification(
+                        topic.getUid(),
+                        "您的帖子有新评论",
+                        account.getPassword() + "评论了你的帖子：" + topic.getTitle()+", 快去看看吧!",
+                        "success",
+                        "/index/topic-detail/"+topic.getId()
+                );
+            }
+        }
         return null;
     }
 
