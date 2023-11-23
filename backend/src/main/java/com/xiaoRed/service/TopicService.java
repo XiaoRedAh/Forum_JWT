@@ -5,6 +5,7 @@ import com.xiaoRed.entity.dto.Interact;
 import com.xiaoRed.entity.dto.Topic;
 import com.xiaoRed.entity.dto.TopicType;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
+import com.xiaoRed.entity.vo.request.TopicUpdateVo;
 import com.xiaoRed.entity.vo.response.TopicDetailVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
@@ -26,5 +27,7 @@ public interface TopicService extends IService<Topic> {
     void interact(Interact interact, boolean state);
 
     List<TopicPreviewVo> listTopicCollects(int uid);
+
+    String updateTopic(int uid, TopicUpdateVo vo);
 }
 

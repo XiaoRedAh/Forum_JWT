@@ -3,6 +3,7 @@ package com.xiaoRed.controller;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.dto.Interact;
+import com.xiaoRed.entity.vo.request.TopicUpdateVo;
 import com.xiaoRed.entity.vo.response.*;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.service.TopicService;
@@ -115,6 +116,18 @@ public class ForumController {
     @GetMapping("/collects")
     public RestBean<List<TopicPreviewVo>> collects(@RequestAttribute(Const.ATTR_USER_ID) int uid){
         return RestBean.success(topicService.listTopicCollects(uid));
+    }
+
+    /**
+     * 修改帖子功能
+     * @param vo 前端发送来的修改帖子参数包装为一个TopicUpdateVo对象
+     * @param uid 当前用户id，用于校验，只能修改自己发表的帖子
+     */
+    @PostMapping("/update-topic")
+    public  RestBean<Void> updateTopic(@Valid @RequestBody TopicUpdateVo vo,
+                                       @RequestAttribute(Const.ATTR_USER_ID) int uid){
+        String message = topicService.updateTopic(uid, vo);
+        return message == null ? RestBean.success() : RestBean.failure(400, message);
     }
 
 

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.*;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
+import com.xiaoRed.entity.vo.request.TopicUpdateVo;
 import com.xiaoRed.entity.vo.response.TopicDetailVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
@@ -91,6 +92,29 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }else{
             return "内部错误，请联系管理员";
         }
+    }
+
+    /**
+     * 修改文章
+     * @param uid 当前用户id，用于校验，只能修改自己发表的帖子
+     * @param vo 前端发送来的修改帖子参数包装为一个TopicUpdateVo对象
+     */
+    @Override
+    public String updateTopic(int uid, TopicUpdateVo vo) {
+        //验证帖子长度是否超出文章长度限制
+        if(!contentLimitCheck(vo.getContent()))
+            return "文章内容超出长度限制，发文失败！";
+        //验证文章类型(用户正常操作肯定不会有问题的，因此触发这种情况的，一般都是故意来搞攻击的)
+        if(!types.contains(vo.getType()))
+            return "文章类型非法，发文失败";
+
+        baseMapper.update(null, Wrappers.<Topic>update()
+                .eq("uid", uid)
+                .eq("id", vo.getId())
+                .set("content", vo.getContent().toString())
+                .set("type", vo.getType())
+        );
+        return null;
     }
 
     /**
