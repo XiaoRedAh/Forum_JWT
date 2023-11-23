@@ -143,6 +143,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         //封装帖子详情的帖子相关信息
         Topic topic = baseMapper.selectById(tid);
         BeanUtils.copyProperties(topic, vo);
+        TopicDetailVo.Interact interact = new TopicDetailVo.Interact(
+                hasInteract(tid, topic.getUid(), "like"),
+                hasInteract(tid, topic.getUid(), "collect")
+        );
+        vo.setInteract(interact);
         //封装帖子详情的用户相关信息
         TopicDetailVo.User user = new TopicDetailVo.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
@@ -210,6 +215,23 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
+     * 判断该用户对帖子是否有点赞/收藏
+     * 因为有可能数据还没有入库，所以先从缓存里找，如果缓存有对应的key，则直接返回对应的键值
+     * 缓存里没有key，才从数据库中找
+     * @param tid 帖子id
+     * @param uid 用户id
+     * @param type 交互类型
+     */
+    private boolean hasInteract(int tid, int uid, String type){
+        String key = tid + ":" + uid;
+        //如果缓存里面有，则直接从缓存里拿
+        if(template.opsForHash().hasKey(type, key)){
+            return Boolean.parseBoolean(template.opsForHash().entries(type).get(key).toString());
+        }
+        return baseMapper.userInteractCount(tid, uid, type) > 0; //缓存里没有，才从数据库里拿
+    }
+
+    /**
      * 获得帖子详情需要的用户信息并返回
      * 注意：需要考虑用户的隐私设置
      * @param target 列表详情需要的用户信息
@@ -252,6 +274,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         TopicPreviewVo vo = new TopicPreviewVo();
         BeanUtils.copyProperties(accountMapper.selectById(topic.getUid()), vo); //用户信息单独查到，把需要的复制给vo
         BeanUtils.copyProperties(topic, vo); //先把topic中的同名属性复制给vo
+        vo.setLike(baseMapper.interactCount(topic.getId(), "like"));//点赞量
+        vo.setCollect(baseMapper.interactCount(topic.getId(), "collect"));//收藏量
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops"); //先拿到ops数组

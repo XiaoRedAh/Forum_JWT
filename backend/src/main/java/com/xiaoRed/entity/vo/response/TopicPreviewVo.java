@@ -19,4 +19,6 @@ public class TopicPreviewVo {
     Integer uid;
     String username;
     String avatar;
+    int like; //展示点赞量
+    int collect; //展示收藏量
 }

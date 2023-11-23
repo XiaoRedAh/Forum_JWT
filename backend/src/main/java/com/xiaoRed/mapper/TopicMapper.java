@@ -5,6 +5,7 @@ import com.xiaoRed.entity.dto.Interact;
 import com.xiaoRed.entity.dto.Topic;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
@@ -51,6 +52,21 @@ public interface TopicMapper extends BaseMapper<Topic> {
             """)
     void  deleteInteract(List<Interact> interacts, String type);
 
+    /**
+     * 返回该帖子对应于交互操作的数量点赞量多少，收藏量多少...)
+     * @param tid 帖子id
+     * @param type 交互操作类型
+     */
+    @Select("select count(*) from db_topic_interact_${type} where tid = #{tid}")
+    int interactCount(int tid, String type);
 
+    /**
+     * 返回1，说明用户对该帖子点赞/收藏；否则说明没有
+     * @param tid 帖子id
+     * @param uid 用户id
+     * @param type 交互操作的类型
+     */
+    @Select("select count(*) from db_topic_interact_${type} where tid = #{tid} and uid = #{uid}")
+    int userInteractCount(int tid, int uid, String type);
 
 }

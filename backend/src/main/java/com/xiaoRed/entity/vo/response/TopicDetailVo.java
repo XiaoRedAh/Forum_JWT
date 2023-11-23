@@ -1,5 +1,6 @@
 package com.xiaoRed.entity.vo.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Date;
@@ -16,7 +17,14 @@ public class TopicDetailVo {
     private Integer type;
     private Date time;
     User user;
+    Interact interact;
 
+    @Data
+    @AllArgsConstructor
+    public static class Interact{
+        Boolean like; //当前用户是否对该帖子点赞
+        Boolean collect; //当前用户是否对该帖子收藏
+    }
     @Data
     public static class User{
         Integer id;
