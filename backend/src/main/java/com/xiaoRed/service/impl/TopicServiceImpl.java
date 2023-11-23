@@ -133,6 +133,22 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
+     * 展示用户的收藏列表
+     * @param uid 用户id
+     */
+    @Override
+    public List<TopicPreviewVo> listTopicCollects(int uid) {
+        return baseMapper.collectTopics(uid)
+                .stream()
+                .map(topic -> {
+                   TopicPreviewVo vo = new TopicPreviewVo();
+                   BeanUtils.copyProperties(topic, vo);
+                   return vo;
+                })
+                .toList();
+    }
+
+    /**
      * 帖子详情
      * 帖子详情包含帖子信息和用户信息，不要联表查询，分开获取即可
      * @param tid 帖子id

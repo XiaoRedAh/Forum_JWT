@@ -107,5 +107,14 @@ public class ForumController {
         return RestBean.success();
     }
 
+    /**
+     * 展示用户的收藏列表
+     * @param uid 用户id
+     */
+    @GetMapping("/collects")
+    public RestBean<List<TopicPreviewVo>> collects(@RequestAttribute(Const.ATTR_USER_ID) int uid){
+        return RestBean.success(topicService.listTopicCollects(uid));
+    }
+
 
 }
