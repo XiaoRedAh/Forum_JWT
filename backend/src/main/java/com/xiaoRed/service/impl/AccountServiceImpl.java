@@ -4,8 +4,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.Account;
+import com.xiaoRed.entity.dto.AccountDetails;
+import com.xiaoRed.entity.dto.AccountPrivacy;
 import com.xiaoRed.entity.vo.request.*;
+import com.xiaoRed.mapper.AccountDetailsMapper;
 import com.xiaoRed.mapper.AccountMapper;
+import com.xiaoRed.mapper.AccountPrivacyMapper;
 import com.xiaoRed.service.AccountService;
 import com.xiaoRed.utils.FlowUtil;
 import jakarta.annotation.Resource;
@@ -36,6 +40,12 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     @Resource
     StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    AccountPrivacyMapper privacyMapper;
+
+    @Resource
+    AccountDetailsMapper detailsMapper;
 
     @Resource
     FlowUtil flowUtil;
@@ -124,6 +134,11 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (this.save(account)) {
             //注册成功后，redis中对应的那个验证码就没用了，手动删除
             stringRedisTemplate.delete(Const.VERIFY_EMAIL_DATA + email);
+            //由于用户详细信息，隐私与用户是强相关的，如果不在注册的时候给默认数据，会有问题（注册后，各种功能都用不了）
+            privacyMapper.insert(new AccountPrivacy(account.getId()));
+            AccountDetails details = new AccountDetails();
+            details.setId(account.getId());
+            detailsMapper.insert(details);
             return null;
         }else {
             return "内部错误，请联系管理员";
@@ -210,7 +225,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     /**
      * 根据用户id从数据库查询出对应用户
      * @param id 用户id
-     * @return
      */
     @Override
     public Account findAccountById(int id) {
