@@ -3,6 +3,7 @@ package com.xiaoRed.controller;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.RestBean;
 import com.xiaoRed.entity.dto.Interact;
+import com.xiaoRed.entity.vo.request.AddCommentVo;
 import com.xiaoRed.entity.vo.request.TopicUpdateVo;
 import com.xiaoRed.entity.vo.response.*;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
@@ -128,6 +129,41 @@ public class ForumController {
                                        @RequestAttribute(Const.ATTR_USER_ID) int uid){
         String message = topicService.updateTopic(uid, vo);
         return message == null ? RestBean.success() : RestBean.failure(400, message);
+    }
+
+    /**
+     * 发表评论功能
+     * @param vo 前端传来的添加评论的参数封装为vo
+     * @param uid 发表评论的用户
+     */
+    @PostMapping("/add-comment")
+    public RestBean<Void> addComment(@Valid @RequestBody AddCommentVo vo,
+                                     @RequestAttribute(Const.ATTR_USER_ID) int uid){
+        String message = topicService.createComment(uid, vo);
+        return message == null ? RestBean.success() : RestBean.failure(400, message);
+    }
+
+    /**
+     * 展示评论功能
+     * @param tid 帖子id
+     * @param pageNum 页号，mp分页器从0开始
+     */
+    @GetMapping("/comments")
+    public RestBean<List<CommentVo>> comments(@RequestParam @Min(0) int tid,
+                                              @RequestParam @Min(0) int pageNum){
+        return RestBean.success(topicService.comments(tid, pageNum + 1));
+    }
+
+    /**
+     * 删除评论功能
+     * @param id 评论id
+     * @param uid 当前用户id，用于校验，只能删除自己的评论，不能删除别人的评论
+     */
+    @GetMapping("/delete-comment")
+    public RestBean<Void> deleteComment(@RequestParam @Min(0) int id,
+                                        @RequestAttribute(Const.ATTR_USER_ID) int uid){
+        topicService.deleteComment(id, uid);
+        return RestBean.success();
     }
 
 

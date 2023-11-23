@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xiaoRed.constants.Const;
 import com.xiaoRed.entity.dto.*;
+import com.xiaoRed.entity.vo.request.AddCommentVo;
 import com.xiaoRed.entity.vo.request.TopicCreateVo;
 import com.xiaoRed.entity.vo.request.TopicUpdateVo;
+import com.xiaoRed.entity.vo.response.CommentVo;
 import com.xiaoRed.entity.vo.response.TopicDetailVo;
 import com.xiaoRed.entity.vo.response.TopicPreviewVo;
 import com.xiaoRed.entity.vo.response.TopicTopVo;
@@ -25,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +41,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     AccountDetailsMapper accountDetailsMapper;
     @Resource
     AccountPrivacyMapper accountPrivacyMapper;
+
+    @Resource
+    TopicCommentMapper topicCommentMapper;
 
     @Resource
     StringRedisTemplate template;
@@ -71,8 +77,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public String createTopic(int uid, TopicCreateVo vo){
-        //验证帖子长度是否超出文章长度限制
-        if(!contentLimitCheck(vo.getContent()))
+        //验证帖子长度是否超出文章长度限制，文章最多20000字
+        if(!contentLimitCheck(vo.getContent(), 20000))
             return "文章内容超出长度限制，发文失败！";
         //验证文章类型(用户正常操作肯定不会有问题的，因此触发这种情况的，一般都是故意来搞攻击的)
         if(!types.contains(vo.getType()))
@@ -101,8 +107,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
      */
     @Override
     public String updateTopic(int uid, TopicUpdateVo vo) {
-        //验证帖子长度是否超出文章长度限制
-        if(!contentLimitCheck(vo.getContent()))
+        //验证文章长度是否超出长度限制，文章最多20000字
+        if(!contentLimitCheck(vo.getContent(), 20000))
             return "文章内容超出长度限制，发文失败！";
         //验证文章类型(用户正常操作肯定不会有问题的，因此触发这种情况的，一般都是故意来搞攻击的)
         if(!types.contains(vo.getType()))
@@ -115,6 +121,71 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
                 .set("type", vo.getType())
         );
         return null;
+    }
+
+    /**
+     * 发表评论
+     * @param uid 发表评论的用户
+     * @param vo 前端传来的添加评论的参数封装为vo
+     */
+    @Override
+    public String createComment(int uid, AddCommentVo vo) {
+        //todo:限制发评论的频率：1分钟只能发表两次评论
+
+        //验证评论长度是否超出长度限制，评论最多2000字
+        if(!contentLimitCheck(JSONObject.parseObject(vo.getContent()), 2000))
+            return "评论内容超出长度限制，评论失败！";
+        TopicComment comment = new TopicComment();
+        BeanUtils.copyProperties(vo, comment); //把同名属性拷贝到comment
+        comment.setUid(uid);
+        comment.setTime(new Date());
+        topicCommentMapper.insert(comment);
+        return null;
+    }
+
+    /**
+     * 展示帖子评论
+     * @param tid 帖子列表
+     * @param pageNum 页号，mp分页器从0开始
+     */
+    @Override
+    public List<CommentVo> comments(int tid, int pageNum) {
+        Page<TopicComment> page = Page.of(pageNum, 10);
+        topicCommentMapper.selectPage(page, Wrappers.<TopicComment>query().eq("tid", tid));
+        return page.getRecords().stream().map(dto -> { //对于查询到的页中每一条TopicComment评论
+            CommentVo vo = new CommentVo();
+            BeanUtils.copyProperties(dto, vo); //先将同名属性拷贝到vo
+            //如果该评论引用了其他评论，则需要获取到被引用评论的文本(精简版)，然后set到vo中
+            if (dto.getQuote() > 0){
+                TopicComment comment = topicCommentMapper.selectOne(Wrappers.<TopicComment>query()
+                        .eq("id", dto.getQuote()).orderByAsc("time")); //先获取该评论引用的评论
+                if(comment != null){ //如果能获取得到，那么正常进行后续操作
+                    JSONObject object = JSONObject.parseObject(comment.getContent());
+                    StringBuilder builder = new StringBuilder();
+                    this.getBriefContent(object.getJSONArray("ops"), builder, ignore->{});
+                    vo.setQuote(builder.toString());
+                }else { //如果没有获取到，说明被引用的评论被删除了
+                    vo.setQuote("此评论已被删除");
+                }
+            }
+            //封装评论者的用户信息，和帖子详情相同，要考虑用户的隐私设置
+            CommentVo.User user = new CommentVo.User();
+            this.fillUserDetailsByPrivacy(user, dto.getUid());
+            vo.setUser(user);
+            //最终得到一条用于展示在前端的评论vo
+            return vo;
+        }).toList();
+    }
+
+    /**
+     * 删除评论功能
+     * @param id 评论id
+     * @param uid 当前用户id，用于校验，只能删除自己的评论，不能删除别人的评论
+     */
+    @Override
+    public void deleteComment(int id, int uid) {
+        topicCommentMapper.delete(Wrappers.<TopicComment>query()
+                .eq("id", id).eq("uid", uid));
     }
 
     /**
@@ -290,16 +361,17 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
     }
 
     /**
-     * 校验帖子长度是否超出限制
+     * 校验文本内容长度是否超出限制
+     * @param max 长度限制
      * @param content 前端发送过来的帖子内容，其实帖子真正的文本存储在ops这个JSON数组下的insert字段
      * @return 返回true表示通过校验，返回false表示超出长度限制，校验不通过
      */
-    private boolean contentLimitCheck(JSONObject content){
+    private boolean contentLimitCheck(JSONObject content, int max){
         if(content==null) return false;
         long length = 0;
         for(Object op : content.getJSONArray("ops")){ //取出ops这个JSON数组
             length += JSONObject.from(op).getString("insert").length(); //从这个数组中拿到insert字段的内容，记录长度
-            if(length>20000) return false;
+            if(length>max) return false;
         }
         return true;
     }
@@ -320,21 +392,33 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops"); //先拿到ops数组
-        for(Object ob : ops){
-            Object insert = JSONObject.from(ob).get("insert");
-            if(insert instanceof String text){ //如果insert里直接就是文本，那其实就是帖子内容
-                if(previewText.length()>=300)continue;
-                previewText.append(text);
-            }else if(insert instanceof Map<?, ?> map){ //如果insert里还是一个JSON(这里用Map代替，JSON本质就是一个map)，则大概率是图片
-                //还是要判断一下，有image字段，才拿
-                Optional.ofNullable(map.get("image"))
-                        .ifPresent(obj -> images.add(obj.toString()));
-            }
-        }
+        this.getBriefContent(ops, previewText, obj->images.add(obj.toString()));
         //这里还要切割出前300个字符，因为之前取insert时，可能很长，直接就超300了
         vo.setText(previewText.length() > 300 ? previewText.substring(0, 300) : previewText.toString());
         vo.setImages(images);
         return vo;
     }
+
+    /**
+     * 根据文本获取其精简版，前300个字
+     * @param ops 从富文本编辑器拿到的文本
+     * @param previewText 最终构造出来的精简版本
+     * @param imageHandler 帖子列表的vo需要展示图片，要用到
+     */
+    private void getBriefContent(JSONArray ops, StringBuilder previewText, Consumer<Object> imageHandler) {
+        for (Object ob : ops) {
+            Object insert = JSONObject.from(ob).get("insert");
+            if (insert instanceof String text) { //如果insert里直接就是文本，那其实就是帖子内容
+                if (previewText.length() >= 300) continue;
+                previewText.append(text);
+            } else if (insert instanceof Map<?, ?> map) { //如果insert里还是一个JSON(这里用Map代替，JSON本质就是一个map)，则大概率是图片
+                //还是要判断一下，有image字段，才拿
+                Optional.ofNullable(map.get("image"))
+                        .ifPresent(imageHandler);
+            }
+        }
+    }
 }
+
+
 
