@@ -2,13 +2,14 @@
 
 import LightCard from "@/components/LightCard.vue";
 import {
+  ArrowRightBold,
   Calendar, CircleCheck,
   Clock,
   CollectionTag,
   Compass,
   Document,
   Edit,
-  EditPen,
+  EditPen, FolderOpened,
   Link,
   Microphone,
   Picture, Star
@@ -23,6 +24,7 @@ import axios from "axios";
 import ColorDot from "@/components/ColorDot.vue";
 import router from "@/router/index.js";
 import TopicTag from "@/components/home/TopicTag.vue";
+import TopicCollectList from "@/components/TopicCollectList.vue";
 
 const store = useStore()
 
@@ -110,6 +112,8 @@ navigator.geolocation.getCurrentPosition(position => {
   timeout: 5000, //5秒钟获取不到，就不获取了，报错,去拿默认的天气信息
   enableHighAccuracy: true //开启高精度
 })
+
+const collects = ref(false)//控制收藏列表是否展示
 </script>
 
 <template>
@@ -200,8 +204,15 @@ navigator.geolocation.getCurrentPosition(position => {
     <!--右侧装一些卡片丰富一下-->
     <div class="right">
       <div class="card-container">
-        <!--论坛公告卡片-->
+        <!--我的收藏列表卡片-->
         <light-card>
+          <div class="collect-list-button" @click="collects = true">
+            <span><el-icon><FolderOpened/></el-icon>查看我的收藏</span>
+            <el-icon style="transform: translateY(3px)"><ArrowRightBold/></el-icon>
+          </div>
+        </light-card>
+        <!--论坛公告卡片-->
+        <light-card style="margin-top: 10px">
           <div style="font-weight: bold">
             <el-icon>
               <CollectionTag/>
@@ -264,6 +275,8 @@ navigator.geolocation.getCurrentPosition(position => {
     </div>
     <!--发表主题卡片，通过editor变量，控制它是否弹出-->
     <topic-editor :show="editor" @success="onTopicCreate" @close="editor = false"></topic-editor>
+    <!--收藏列表篇卡片，通过collects控制它是否弹出-->
+    <topic-collect-list :show="collects" @close="collects = false"/>
   </div>
 </template>
 
@@ -410,6 +423,18 @@ navigator.geolocation.getCurrentPosition(position => {
   top: 20px;
 }
 
+.collect-list-button{
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  transition: .3s;
+  
+  &:hover{
+    cursor: pointer;
+    opacity: 0.6; /*触摸到时，颜色变暗淡一点*/
+  }
+
+}
 .info-text {
   display: flex;
   justify-content: space-between;
