@@ -2,7 +2,7 @@
 
 import LightCard from "@/components/LightCard.vue";
 import {
-  Calendar,
+  Calendar, CircleCheck,
   Clock,
   CollectionTag,
   Compass,
@@ -11,7 +11,7 @@ import {
   EditPen,
   Link,
   Microphone,
-  Picture
+  Picture, Star
 } from "@element-plus/icons-vue";
 import {computed, ref, reactive, watch} from "vue";
 import {get} from "@/net/index.js"
@@ -27,7 +27,7 @@ import TopicTag from "@/components/home/TopicTag.vue";
 const store = useStore()
 
 //控制“编辑文章”的卡片是否弹出
-const editor = ref(false)
+let editor = ref(false)
 
 //帖子列表相关属性
 const topics = reactive({
@@ -176,12 +176,20 @@ navigator.geolocation.getCurrentPosition(position => {
                 <topic-tag :type="item.type"/>
                 <span style="font-weight: bold;margin-left: 7px;font-size: 18px">{{item.title}}</span>
               </div>
-              <!--卡片下半部分展示：帖子内容预览 + 图片预览-->
+              <!--卡片下半部分展示：帖子内容预览 + 图片预览 + 点赞量收藏量展示-->
               <div class="preview-text">
                 {{item.text}}
               </div>
               <div class="preview-image-container">
                 <el-image class="preview-image" v-for="img in item.images" :src="img" fit="cover"></el-image>
+              </div>
+              <div style="display: flex;gap: 20px;font-size: 13px;margin-top: 10px">
+                <div>
+                  <el-icon style="vertical-align: middle"><CircleCheck/></el-icon>{{item.like}}点赞
+                </div>
+                <div>
+                  <el-icon style="vertical-align: middle"><Star/></el-icon>{{item.collect}}收藏
+                </div>
               </div>
             </light-card>
           </div>

@@ -1,8 +1,8 @@
 <script setup>
 
 import {
-  ArrowLeft,
-  Female, Male,
+  ArrowLeft, CircleCheck,
+  Female, Male, Star,
 } from "@element-plus/icons-vue";
 import {computed, reactive} from "vue";
 import {get} from "@/net/index.js"
@@ -12,6 +12,8 @@ import router from "@/router/index.js";
 import axios from "axios";
 import {useRoute} from "vue-router";
 import TopicTag from "@/components/home/TopicTag.vue";
+import InteractButton from "@/components/InteractButton.vue";
+import {ElMessage} from "element-plus";
 
 const route = useRoute()
 
@@ -19,11 +21,15 @@ const tid = route.params.tid
 
 const topic = reactive({
   data: null,
+  like:false,
+  collect:false,
   comments:[]
 })
 
 get(`api/forum/topic?tid=${tid}`, data=>{
   topic.data = data
+  topic.like = data.interact.like
+  topic.collect = data.interact.collect
 })
 
 
@@ -33,6 +39,17 @@ const content = computed(()=>{
   const converter = new QuillDeltaToHtmlConverter(ops, {inlineStyles: true});
   return converter.convert();
 })
+
+//点赞/取消点赞/收藏/取消收藏
+function interact(type, message){
+  get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic[type]}`, ()=>{
+    topic[type] = !topic[type]
+    if(topic[type])
+      ElMessage.success(`${message}成功！`)
+    else
+      ElMessage.success(`已取消${message}！`)
+  })
+}
 </script>
 
 <template>
@@ -46,6 +63,9 @@ const content = computed(()=>{
         <div style="text-align: center;flex: 1">
           <topic-tag :type="topic.data.type"></topic-tag>
           <span style="font-weight: bold;margin-left: 5px;font-size: 20px">{{topic.data.title}}</span>
+          <div style="margin-top: 5px;font-size: 13px;color: grey">
+            发帖时间：{{new Date(topic.data.time).toLocaleString()}}
+          </div>
         </div>
       </el-card>
     </div>
@@ -75,10 +95,20 @@ const content = computed(()=>{
         <el-divider style="margin: 10px 0"/>
         <div class="desc" style="margin: 0 5px">{{topic.data.user.desc}}</div>
       </div>
-      <!--右侧：展示帖子信息，利用插件将后端的帖子内容转换为html格式的content，通过v-html展示-->
+      <!--右侧：主要是展示帖子主体，附带一些零碎的小功能-->
       <div class="topic-main-right">
-        <div class="topic-content" v-html="content">
-
+        <!--利用插件将后端的帖子内容转换为html格式的content，通过v-html展示-->
+        <div class="topic-content" v-html="content"></div>
+        <!--点赞，收藏按钮-->
+        <div style="text-align: right; margin-top: 30px">
+          <interact-button name="点个赞吧" check-name="已点赞" color="pink" :check="topic.like"
+                           @check="interact('like', '点赞')">
+            <el-icon><CircleCheck/></el-icon>
+          </interact-button>
+          <interact-button name="收藏本贴" check-name="已收藏" color="orange" :check="topic.collect"
+                           @check="interact('collect', '收藏')">
+            <el-icon><Star/></el-icon>
+          </interact-button>
         </div>
       </div>
     </div>
