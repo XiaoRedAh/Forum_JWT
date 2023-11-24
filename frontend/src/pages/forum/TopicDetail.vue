@@ -2,7 +2,7 @@
 
 import {
   ArrowLeft, CircleCheck,
-  Female, Male, Star,
+  Female, Male, Plus, Star,
 } from "@element-plus/icons-vue";
 import {computed, reactive} from "vue";
 import {get} from "@/net/index.js"
@@ -14,6 +14,7 @@ import {useRoute} from "vue-router";
 import TopicTag from "@/components/home/TopicTag.vue";
 import InteractButton from "@/components/InteractButton.vue";
 import {ElMessage} from "element-plus";
+import TopicCommentEditor from "@/components/TopicCommentEditor.vue";
 
 const route = useRoute()
 
@@ -50,6 +51,12 @@ function interact(type, message){
       ElMessage.success(`已取消${message}！`)
   })
 }
+
+const comment = reactive({
+  show: false, //控制评论编辑器展示
+  text: '', //评论内容
+  quote: -1 //默认没有引用其他评论
+})
 </script>
 
 <template>
@@ -110,10 +117,13 @@ function interact(type, message){
             <el-icon><Star/></el-icon>
           </interact-button>
         </div>
+        <!--发表评论组件-->
+        <topic-comment-editor :show="comment.show" @close="comment.show=false" :tid="tid" :quote="comment.quote"/>
+        <!--控制发表评论编辑器展示的按钮-->
+        <div class="add-comment" @click=" comment.show= true">
+          <el-icon><Plus/></el-icon>
+        </div>
       </div>
-    </div>
-    <div>
-
     </div>
   </div>
 
@@ -162,6 +172,25 @@ function interact(type, message){
       line-height: 20px;
       opacity: 0.8; //字体太亮了，给加一点透明度
     }
+  }
+}
+
+.add-comment{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--el-color-primary);
+  text-align: center;
+  line-height: 45px;
+  background: var(--el-bg-color-overlay);
+  background: car(--el-box-shadow-lighter);
+
+  &:hover{
+    cursor: pointer;
+    background: var(--el-border-color-extra-light);
   }
 }
 </style>

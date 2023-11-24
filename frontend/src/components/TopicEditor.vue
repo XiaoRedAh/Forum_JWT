@@ -6,7 +6,7 @@ import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
 import {Quill, QuillEditor} from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import axios from "axios";
-import {get, post} from "@/net/index.js"
+import {post} from "@/net/index.js"
 import {accessHeader} from "@/net/index.js";
 import {ElMessage} from "element-plus";
 import ColorDot from "@/components/ColorDot.vue";
@@ -215,22 +215,4 @@ const editorOption = {
   margin: 0;
 }
 
-:deep(.ql-toolbar) {
-  border-radius: 5px 5px 0 0;
-  border-color: var(--el-border-color);
-}
-
-:deep(.ql-container) {
-  border-radius: 0 0 5px 5px;
-  border-color: var(--el-border-color);
-}
-
-:deep(.ql-editor.ql-blank::before) {
-  color: var(--el-text-color-placeholder);
-  font-style: normal;
-}
-
-:deep(.ql-editor) {
-  font-size: 14px;
-}
 </style>

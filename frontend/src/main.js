@@ -5,6 +5,7 @@ import '@/style.css'
 import router from '@/router'
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import {createPinia} from 'pinia'
+import '@/assets/quill.css'
 
 const app = createApp(App)
 app.use(router)

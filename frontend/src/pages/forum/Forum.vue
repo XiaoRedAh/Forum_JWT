@@ -15,13 +15,17 @@ get('/api/forum/types', data => {
 </script>
 
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="el-fade-in-linear" mode="out-in">
-      <!--keep-alive TopicList组件中的信息(帖子列表，天气信息...)，使得在看完帖子详情，返回列表时，不用重新加载一次，优化性能-->
-      <keep-alive include="TopicList">
-        <component :is="Component"/>
-      </keep-alive>
-    </transition>
-  </router-view>
+  <div>
+    <router-view v-slot="{ Component }">
+      <transition name="el-fade-in-linear" mode="out-in">
+        <!--keep-alive TopicList组件中的信息(帖子列表，天气信息...)，使得在看完帖子详情，返回列表时，不用重新加载一次，优化性能-->
+        <keep-alive include="TopicList">
+          <component :is="Component"/>
+        </keep-alive>
+      </transition>
+    </router-view>
+    <!--一键返回顶部：控制HomeIndex的class为main的那个div中的el-scrollbar-->
+    <el-backtop target=".main .el-scrollbar__wrap" :right="20" :bottom="70"/>
+  </div>
 
 </template>
