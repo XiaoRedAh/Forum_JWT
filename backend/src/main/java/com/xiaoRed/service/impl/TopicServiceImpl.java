@@ -306,7 +306,7 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         String type = interact.getType();
         synchronized (type.intern()){ //数据入库过程中，不允许新数据到来(防止可能的数据丢失)
             //这里存到哈希表里，因为点赞/收藏无论外面点多少次，就只有两种结果，相同key的在哈希表中不断覆盖，就留下最终的那次即可
-            template.opsForHash().put(type, interact.toKey(),state); //键=type:tid:uid，键值=state
+            template.opsForHash().put(type, interact.toKey(),Boolean.toString(state)); //键=type:tid:uid，键值=state
             this.saveInteractSchedule(type); //利用定时任务进行持久化
         }
     }
