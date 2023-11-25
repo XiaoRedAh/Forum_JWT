@@ -2,7 +2,7 @@
 import {
  Check
 } from "@element-plus/icons-vue";
-import {QuillEditor} from '@vueup/vue-quill'
+import {Delta, QuillEditor} from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import {post} from "@/net"
 import {ref} from "vue"
@@ -14,8 +14,10 @@ const props = defineProps({
   tid: Number,
   quote: Number
 })
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close','comment'])
 const content = ref() //评论内容
+
+const init = ()=>content.value = new Delta()
 
 //发表评论
 function submitComment(){
@@ -25,14 +27,14 @@ function submitComment(){
     content: JSON.stringify(content.value) //转成string
   }, ()=>{
     ElMessage.success('发表评论成功')
-    emit('close') //自动关闭
+    emit('comment')
   })
 }
 </script>
 
 <template>
   <div>
-    <el-drawer :model-value="show" @close="emit('close')" direction="btt" :size="270"
+    <el-drawer :model-value="show" @open="init" @close="emit('close')" direction="btt" :size="270"
                :close-on-click-modal="false" title="发表评论">
       <div>
         <div>
