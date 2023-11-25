@@ -289,6 +289,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         //封装帖子详情的用户相关信息
         TopicDetailVo.User user = new TopicDetailVo.User();
         vo.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
+        //封装该帖子有几条评论，方便前端拿来分页
+        vo.setComments(topicCommentMapper.selectCount(Wrappers.<TopicComment>query().eq("tid", tid)));
         return vo;
     }
 

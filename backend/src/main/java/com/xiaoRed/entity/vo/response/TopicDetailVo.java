@@ -18,6 +18,7 @@ public class TopicDetailVo {
     private Date time;
     User user;
     Interact interact;
+    Long comments; //该帖子的评论数,方便前端拿来分页
 
     @Data
     @AllArgsConstructor
